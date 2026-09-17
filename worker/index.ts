@@ -1,4 +1,4 @@
-import { getUserRoles, identity, requireRoles } from './authorization';
+import { identity, requireRoles } from './authorization';
 
 interface Env {
   ASSETS: { fetch: (request: Request) => Promise<Response> };

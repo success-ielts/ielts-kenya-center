@@ -50,8 +50,14 @@ jobs:
       - name: Prepare apex DNS for Worker Custom Domain
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
+          DOMAIN_EXISTS=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/domains?hostname=ielts-kenyacenter.or.ke" | jq -r '.result[0].id // empty')
+          if [ -n "$DOMAIN_EXISTS" ]; then
+            echo "Worker Custom Domain already exists; leaving Cloudflare-managed DNS records untouched."
+            exit 0
+          fi
           ZONE_ID=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/zones?name=ielts-kenyacenter.or.ke&status=active" | jq -r '.result[0].id // empty')
           test -n "$ZONE_ID"
           RECORDS=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records?name=ielts-kenyacenter.or.ke&per_page=100")

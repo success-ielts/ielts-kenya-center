@@ -69,7 +69,14 @@ async function protectedAppRoute(request: Request, env: Env, allowedRoles: strin
     const message = auth.response.status === 401 ? 'Please sign in to access this protected area.' : 'Your account does not have a role authorized for this area.';
     return accessDeniedPage(auth.response.status, message);
   }
-  return env.ASSETS.fetch(request);
+  const shellRequest = new Request(
+    new URL('/index.html', request.url),
+    {
+      method: 'GET',
+      headers: request.headers,
+    },
+  );
+  return env.ASSETS.fetch(shellRequest);
 }
 
 async function api(request: Request, env: Env): Promise<Response> {
@@ -188,85 +195,69 @@ async function api(request: Request, env: Env): Promise<Response> {
         supabase(env, `/rest/v1/course_modules?course_id=eq.${encodeURIComponent(courseId)}&select=id,course_id,title,description,sort_order&order=sort_order.asc`, {}, auth.token),
         supabase(env, `/rest/v1/lesson_progress?student_id=eq.${encodeURIComponent(studentId)}&select=lesson_id,status,percent,last_position_seconds,completed_at,updated_at`, {}, auth.token),
       ]);
-      if (!course.response.ok || !modules.response.ok || !progress.response.ok) return error('Unable to load the course.', 502);
-      const moduleRows = Array.isArray(modules.data) ? modules.data : [];
-      let lessons: any[] = [];
-      if (moduleRows.length) {
-        const ids = moduleRows.map(m => m.id).join(',');
-        const lessonResult = await supabase(env, `/rest/v1/lessons?module_id=in.(${encodeURIComponent(ids)})&is_published=eq.true&select=id,module_id,title,lesson_type,duration_minutes,sort_order&order=sort_order.asc`, {}, auth.token);
-        if (!lessonResult.response.ok) return error('Unable to load course lessons.', 502);
-        lessons = Array.isArray(lessonResult.data) ? lessonResult.data : [];
+      if (!course.response.ok || !modules.response.ok || !progress.response.ok) return error('Unable to load this course.', 502);
+      const lessonRows: any[] = [];
+      for (const module of (Array.isArray(modules.data) ? modules.data : [])) {
+        const lessons = await supabase(env, `/rest/v1/lessons?module_id=eq.${encodeURIComponent(module.id)}&is_published=eq.true&select=id,module_id,title,slug,content,sort_order&order=sort_order.asc`, {}, auth.token);
+        if (!lessons.response.ok) return error('Unable to load course lessons.', 502);
+        lessonRows.push(...(Array.isArray(lessons.data) ? lessons.data : []));
       }
-      const progressRows = Array.isArray(progress.data) ? progress.data : [];
-      const completed = lessons.filter(l => progressRows.some(p => p.lesson_id === l.id && p.status === 'completed')).length;
-      return json({ course: Array.isArray(course.data) ? course.data[0] || null : null, modules: moduleRows, lessons, progress: progressRows, courseProgress: lessons.length ? Math.round((completed / lessons.length) * 100) : 0 });
+      return json({ course: Array.isArray(course.data) ? course.data[0] || null : null, modules: modules.data, lessons: lessonRows, progress: progress.data });
     }
 
     const lessonMatch = path.match(/^\/api\/learning\/lessons\/([^/]+)$/);
     if (method === 'GET' && lessonMatch) {
       const lessonId = decodeURIComponent(lessonMatch[1]);
-      const lessonResult = await supabase(env, `/rest/v1/lessons?id=eq.${encodeURIComponent(lessonId)}&is_published=eq.true&select=id,module_id,title,lesson_type,content,duration_minutes,sort_order`, {}, auth.token);
-      if (!lessonResult.response.ok || !Array.isArray(lessonResult.data) || !lessonResult.data.length) return error('Lesson not found.', 404);
-      const lesson = lessonResult.data[0];
-      const moduleResult = await supabase(env, `/rest/v1/course_modules?id=eq.${encodeURIComponent(lesson.module_id)}&select=id,course_id,title,sort_order`, {}, auth.token);
-      if (!moduleResult.response.ok || !Array.isArray(moduleResult.data) || !moduleResult.data.length) return error('Lesson module not found.', 404);
-      const courseId = moduleResult.data[0].course_id;
-      const enrollment = await isEnrolled(env, studentId, courseId, auth.token);
+      const lesson = await supabase(env, `/rest/v1/lessons?id=eq.${encodeURIComponent(lessonId)}&is_published=eq.true&select=id,module_id,title,slug,content,sort_order`, {}, auth.token);
+      if (!lesson.response.ok || !Array.isArray(lesson.data) || !lesson.data.length) return error('Lesson not found.', 404);
+      const lessonRow = lesson.data[0];
+      const module = await supabase(env, `/rest/v1/course_modules?id=eq.${encodeURIComponent(lessonRow.module_id)}&select=id,course_id`, {}, auth.token);
+      if (!module.response.ok || !Array.isArray(module.data) || !module.data.length) return error('Lesson course not found.', 404);
+      const enrollment = await isEnrolled(env, studentId, module.data[0].course_id, auth.token);
       if (!enrollment.ok) return error('Unable to check enrollment.', 502);
-      if (!enrollment.enrolled) return error('Enroll in this course to access this lesson.', 403);
-      const progress = await supabase(env, `/rest/v1/lesson_progress?student_id=eq.${encodeURIComponent(studentId)}&lesson_id=eq.${encodeURIComponent(lessonId)}&select=id,lesson_id,status,percent,last_position_seconds,completed_at,updated_at`, {}, auth.token);
+      if (!enrollment.enrolled) return error('Enroll in this course to access its lessons.', 403);
+      const progress = await supabase(env, `/rest/v1/lesson_progress?student_id=eq.${encodeURIComponent(studentId)}&lesson_id=eq.${encodeURIComponent(lessonId)}&select=id,status,percent,last_position_seconds,completed_at,updated_at`, {}, auth.token);
       if (!progress.response.ok) return error('Unable to load lesson progress.', 502);
-      return json({ lesson, module: moduleResult.data[0], progress: Array.isArray(progress.data) ? progress.data[0] || null : null });
+      return json({ lesson: lessonRow, progress: Array.isArray(progress.data) ? progress.data[0] || null : null });
     }
 
     if (method === 'PUT' && path === '/api/learning/progress') {
       if (!body.lessonId) return error('Lesson is required.', 400);
-      const lessonResult = await supabase(env, `/rest/v1/lessons?id=eq.${encodeURIComponent(body.lessonId)}&is_published=eq.true&select=id,module_id`, {}, auth.token);
-      if (!lessonResult.response.ok || !Array.isArray(lessonResult.data) || !lessonResult.data.length) return error('Lesson not found.', 404);
-      const moduleResult = await supabase(env, `/rest/v1/course_modules?id=eq.${encodeURIComponent(lessonResult.data[0].module_id)}&select=id,course_id`, {}, auth.token);
-      if (!moduleResult.response.ok || !Array.isArray(moduleResult.data) || !moduleResult.data.length) return error('Lesson module not found.', 404);
-      const courseId = moduleResult.data[0].course_id;
-      const enrollment = await isEnrolled(env, studentId, courseId, auth.token);
+      const lesson = await supabase(env, `/rest/v1/lessons?id=eq.${encodeURIComponent(body.lessonId)}&is_published=eq.true&select=id,module_id`, {}, auth.token);
+      if (!lesson.response.ok || !Array.isArray(lesson.data) || !lesson.data.length) return error('Lesson not found.', 404);
+      const module = await supabase(env, `/rest/v1/course_modules?id=eq.${encodeURIComponent(lesson.data[0].module_id)}&select=id,course_id`, {}, auth.token);
+      if (!module.response.ok || !Array.isArray(module.data) || !module.data.length) return error('Lesson course not found.', 404);
+      const enrollment = await isEnrolled(env, studentId, module.data[0].course_id, auth.token);
       if (!enrollment.ok) return error('Unable to check enrollment.', 502);
-      if (!enrollment.enrolled) return error('Enroll in this course to save progress.', 403);
-      const percent = Math.max(0, Math.min(100, Number(body.percent ?? 0)));
-      const status = body.status === 'completed' || percent >= 100 ? 'completed' : percent > 0 ? 'in_progress' : 'not_started';
-      const lastPosition = Math.max(0, Math.floor(Number(body.lastPositionSeconds ?? 0)));
-      const existing = await supabase(env, `/rest/v1/lesson_progress?student_id=eq.${encodeURIComponent(studentId)}&lesson_id=eq.${encodeURIComponent(body.lessonId)}&select=id`, {}, auth.token);
-      if (!existing.response.ok) return error('Unable to check existing progress.', 502);
-      let result;
-      const payload = { status, percent, last_position_seconds: lastPosition, completed_at: status === 'completed' ? new Date().toISOString() : null };
-      if (Array.isArray(existing.data) && existing.data.length) {
-        result = await supabase(env, `/rest/v1/lesson_progress?id=eq.${encodeURIComponent(existing.data[0].id)}`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify(payload) }, auth.token);
-      } else {
-        result = await supabase(env, '/rest/v1/lesson_progress', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ student_id: studentId, lesson_id: body.lessonId, ...payload }) }, auth.token);
-      }
-      if (!result.response.ok) return error('Unable to save lesson progress.', result.response.status);
-      return json({ progress: Array.isArray(result.data) ? result.data[0] || null : null });
-    }
-
-    if (method === 'GET' && path === '/api/profile') {
-      const profileResponse = await supabase(env, `/rest/v1/profiles?id=eq.${encodeURIComponent(studentId)}&select=*`, {}, auth.token);
-      if (!profileResponse.response.ok) return error('Unable to load your profile.', profileResponse.response.status);
-      return json({ profile: Array.isArray(profileResponse.data) ? profileResponse.data[0] || null : null });
-    }
-    if (method === 'PUT' && path === '/api/profile') {
-      const allowed = ['full_name','phone_number','country','county_town','target_ielts_type','target_band','current_estimated_band','planned_exam_date','preferred_study_schedule','study_goal','destination_country','preferred_tutor_id'];
-      const patch = Object.fromEntries(Object.entries(body).filter(([key]) => allowed.includes(key)));
-      const profileResponse = await supabase(env, `/rest/v1/profiles?id=eq.${encodeURIComponent(studentId)}`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify(patch) }, auth.token);
-      if (!profileResponse.response.ok) return error('Unable to save your profile.', profileResponse.response.status);
-      return json({ profile: Array.isArray(profileResponse.data) ? profileResponse.data[0] || null : null });
+      if (!enrollment.enrolled) return error('Enroll in this course to update progress.', 403);
+      const payload = { student_id: studentId, lesson_id: body.lessonId, status: body.status || 'in_progress', percent: Math.max(0, Math.min(100, Number(body.percent) || 0)), last_position_seconds: Math.max(0, Number(body.lastPositionSeconds) || 0), completed_at: body.status === 'completed' ? new Date().toISOString() : null };
+      const saved = await supabase(env, `/rest/v1/lesson_progress?on_conflict=student_id,lesson_id`, { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=representation' }, body: JSON.stringify(payload) }, auth.token);
+      if (!saved.response.ok) return error('Unable to save lesson progress.', saved.response.status);
+      return json({ progress: Array.isArray(saved.data) ? saved.data[0] || null : null });
     }
   }
-  return env.ASSETS.fetch(request);
+
+  if (path === '/api/profile') {
+    if (method === 'GET') {
+      const profile = await supabase(env, `/rest/v1/profiles?id=eq.${encodeURIComponent(auth.user.id)}&select=id,full_name,email,phone,country,avatar_url`, {}, auth.token);
+      if (!profile.response.ok) return error('Unable to load your profile.', 502);
+      return json({ profile: Array.isArray(profile.data) ? profile.data[0] || null : null });
+    }
+    if (method === 'PATCH') {
+      const allowed = { full_name: body.fullName, phone: body.phone, country: body.country, avatar_url: body.avatarUrl };
+      const updated = await supabase(env, `/rest/v1/profiles?id=eq.${encodeURIComponent(auth.user.id)}`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify(allowed) }, auth.token);
+      if (!updated.response.ok) return error('Unable to update your profile.', updated.response.status);
+      return json({ profile: Array.isArray(updated.data) ? updated.data[0] || null : null });
+    }
+  }
+
+  return error('Not found.', 404);
 }
 
-export default {
-  async fetch(request: Request, env: Env) {
-    const url = new URL(request.url);
-    if (url.pathname === '/admin/dashboard') return protectedAppRoute(request, env, adminRoles);
-    if (url.pathname === '/staff/dashboard') return protectedAppRoute(request, env, staffRoles);
-    if (url.pathname.startsWith('/api/')) return api(request, env);
-    return env.ASSETS.fetch(request);
-  },
-};
+export default { fetch: (request: Request, env: Env) => {
+  const url = new URL(request.url);
+  if (url.pathname.startsWith('/api/')) return api(request, env);
+  if (url.pathname.startsWith('/admin/')) return protectedAppRoute(request, env, adminRoles);
+  if (url.pathname.startsWith('/staff/')) return protectedAppRoute(request, env, staffRoles);
+  return env.ASSETS.fetch(request);
+} };

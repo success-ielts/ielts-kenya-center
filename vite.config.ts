@@ -10,7 +10,7 @@ export default defineConfig({
       '@appdeploy/client': fileURLToPath(new URL('./src/api.ts', import.meta.url)),
     },
   },
-  base: './',
+  base: '/',
   build: {
     outDir: 'dist',
     sourcemap: false,

@@ -46,7 +46,7 @@ export async function getUserRoles(env: RoleAuthEnv, userId: string, token: stri
     },
   });
   if (!response.ok) return [];
-  const rows = await response.json<any[]>();
+  const rows = await response.json() as any[];
   return Array.from(new Set(
     (Array.isArray(rows) ? rows : [])
       .map(row => row?.roles?.name)

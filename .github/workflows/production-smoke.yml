@@ -26,4 +26,4 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           SITE_URL: https://ielts-kenyacenter.or.ke
-        run: node tests/production-smoke.mjs
+        run: node tests/production-smoke-v2.mjs

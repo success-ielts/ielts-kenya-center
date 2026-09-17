@@ -89,3 +89,17 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: printf '%s' "$RESEND_API_KEY" | npx wrangler secret put RESEND_API_KEY
+      - name: Verify production domain
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            if curl -fsS --max-time 15 https://ielts-kenyacenter.or.ke/ | grep -q "IELTS Kenya Center"; then
+              curl -fsS --max-time 15 https://ielts-kenyacenter.or.ke/api/_healthcheck | grep -q '"ok":true'
+              echo "Production domain verification passed on attempt $attempt."
+              exit 0
+            fi
+            echo "Production domain not ready yet; retry $attempt/12."
+            sleep 10
+          done
+          echo "Production domain did not become healthy within the verification window."
+          exit 1

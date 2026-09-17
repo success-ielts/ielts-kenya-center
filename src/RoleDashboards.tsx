@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { api } from './api';
 
-const shell: React.CSSProperties = { minHeight: '100vh', background: '#f7f5ef', padding: '32px 20px', color: '#18221f' };
-const card: React.CSSProperties = { maxWidth: 900, margin: '0 auto', background: '#fff', border: '1px solid #e7e3d9', borderRadius: 20, padding: 28, boxShadow: '0 12px 35px rgba(24,34,31,.06)' };
+const shell: CSSProperties = { minHeight: '100vh', background: '#f7f5ef', padding: '32px 20px', color: '#18221f' };
+const card: CSSProperties = { maxWidth: 900, margin: '0 auto', background: '#fff', border: '1px solid #e7e3d9', borderRadius: 20, padding: 28, boxShadow: '0 12px 35px rgba(24,34,31,.06)' };
 
 function RoleDashboard({ kind }: { kind: 'admin' | 'staff' }) {
   const [identity, setIdentity] = useState<any>(null);

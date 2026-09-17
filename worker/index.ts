@@ -1,3 +1,5 @@
+import { getUserRoles, identity, requireRoles } from './authorization';
+
 interface Env {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
   SUPABASE_URL: string;
@@ -50,6 +52,24 @@ async function requireUser(env: Env, request: Request) {
 async function isEnrolled(env: Env, studentId: string, courseId: string, token: string) {
   const result = await supabase(env, `/rest/v1/enrollments?student_id=eq.${encodeURIComponent(studentId)}&course_id=eq.${encodeURIComponent(courseId)}&status=neq.paused&select=id,status`, {}, token);
   return { ok: result.response.ok, enrolled: Array.isArray(result.data) && result.data.length > 0 };
+}
+
+const adminRoles = ['super_admin', 'admin'];
+const staffRoles = ['academic_director', 'ielts_tutor', 'student_support', 'content_editor', 'marketing', 'exam_manager', 'finance', 'read_only_auditor'];
+
+function accessDeniedPage(status: number, message: string) {
+  const title = status === 401 ? 'Sign in required' : 'Access denied';
+  const safeMessage = message.replace(/[<>&\"']/g, '');
+  return new Response(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head><body style="font-family:system-ui,sans-serif;padding:40px;line-height:1.6"><main style="max-width:680px;margin:auto"><h1>${title}</h1><p>${safeMessage}</p><p><a href="/">Return to IELTS Kenya Center</a></p></main></body></html>`, { status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+}
+
+async function protectedAppRoute(request: Request, env: Env, allowedRoles: string[]) {
+  const auth = await requireRoles(env, request, allowedRoles);
+  if (auth.response) {
+    const message = auth.response.status === 401 ? 'Please sign in to access this protected area.' : 'Your account does not have a role authorized for this area.';
+    return accessDeniedPage(auth.response.status, message);
+  }
+  return env.ASSETS.fetch(request);
 }
 
 async function api(request: Request, env: Env): Promise<Response> {
@@ -108,9 +128,7 @@ async function api(request: Request, env: Env): Promise<Response> {
   }
 
   if (method === 'POST' && path === '/api/auth/signout') return clearCookie();
-  if (method === 'GET' && path === '/api/auth/me') {
-    const session = await currentUser(env, request); return session.user ? json({ user: session.user }) : json({ user: null });
-  }
+  if (method === 'GET' && path === '/api/auth/me') return json(await identity(env, request));
 
   if (method === 'PUT' && path === '/api/auth/password') {
     const auth = await requireUser(env, request); if (auth.response) return auth.response;
@@ -118,6 +136,18 @@ async function api(request: Request, env: Env): Promise<Response> {
     const { response, data } = await supabase(env, '/auth/v1/user', { method: 'PUT', body: JSON.stringify({ password: String(body.password) }) }, auth.token);
     if (!response.ok) return error((data as any)?.message || 'Unable to update your password.', response.status);
     return json({ ok: true, message: 'Password updated successfully.' });
+  }
+
+  if (method === 'GET' && path === '/api/admin/dashboard') {
+    const auth = await requireRoles(env, request, adminRoles);
+    if (auth.response) return auth.response;
+    return json({ ok: true, area: 'admin', user: auth.identity!.user, roles: auth.identity!.roles });
+  }
+
+  if (method === 'GET' && path === '/api/staff/dashboard') {
+    const auth = await requireRoles(env, request, staffRoles);
+    if (auth.response) return auth.response;
+    return json({ ok: true, area: 'staff', user: auth.identity!.user, roles: auth.identity!.roles });
   }
 
   const auth = await requireUser(env, request);
@@ -234,6 +264,8 @@ async function api(request: Request, env: Env): Promise<Response> {
 export default {
   async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
+    if (url.pathname === '/admin/dashboard') return protectedAppRoute(request, env, adminRoles);
+    if (url.pathname === '/staff/dashboard') return protectedAppRoute(request, env, staffRoles);
     if (url.pathname.startsWith('/api/')) return api(request, env);
     return env.ASSETS.fetch(request);
   },

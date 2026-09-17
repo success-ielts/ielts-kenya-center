@@ -105,13 +105,18 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in $(seq 1 12); do
-            if curl -fsS --max-time 15 https://ielts-kenyacenter.or.ke/ | grep -q "IELTS Kenya Center"; then
-              curl -fsS --max-time 15 https://ielts-kenyacenter.or.ke/api/_healthcheck | grep -q '"ok":true'
+            HOME_BODY="$(curl -fsS --max-time 15 https://ielts-kenyacenter.or.ke/ || true)"
+            HEALTH_BODY="$(curl -fsS --max-time 15 https://ielts-kenyacenter.or.ke/api/_healthcheck || true)"
+
+            if printf '%s' "$HOME_BODY" | grep -q "IELTS Kenya Center" \
+               && printf '%s' "$HEALTH_BODY" | grep -q '"ok":true'; then
               echo "Production domain verification passed on attempt $attempt."
               exit 0
             fi
+
             echo "Production domain not ready yet; retry $attempt/12."
             sleep 10
           done
+
           echo "Production domain did not become healthy within the verification window."
           exit 1

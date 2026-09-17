@@ -8,7 +8,9 @@ async function request<T = any>(path: string, init: RequestInit = {}): Promise<A
   let data: any = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = { message: text }; }
   if (!response.ok) {
-    const error: any = new Error(data?.message || data?.error || `Request failed (${response.status})`);
+    const message = data?.message || data?.error || `Request failed (${response.status})`;
+    console.error(`[API ${response.status}] ${init.method || 'GET'} ${new URL(path, window.location.origin).href} :: ${message}`);
+    const error: any = new Error(message);
     error.response = { data, status: response.status };
     throw error;
   }

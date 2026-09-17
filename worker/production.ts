@@ -15,7 +15,7 @@ const json = (data: unknown, status = 200) => new Response(JSON.stringify(data),
 const safe = (value: string) => value.replace(/[<>&\"']/g, '');
 
 async function adminGenerateLink(env: Env, payload: Record<string, unknown>) {
-  const response = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/generate_link`, { method: 'POST', headers: { apikey: env.SUPABASE_SECRET_KEY, Authorization: `Bearer ${env.SUPABASE_SECRET_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  const response = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/generate_link`, { method: 'POST', headers: { apikey: env.SUPABASE_SECRET_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   const text = await response.text(); let data: any = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = null; }
   return { response, data };

@@ -26,6 +26,16 @@ export function ResetPasswordPage() {
   return <main style={shellStyle}><section style={{ ...cardStyle, maxWidth: 560 }}><LockKeyhole size={34}/><h1>Set a new password</h1><p>{message}</p>{ready && !saved && <form onSubmit={submit} style={{ display: 'grid', gap: 14 }}><label>New password<input required minLength={8} type="password" value={password} onChange={e => setPassword(e.target.value)} style={{ display: 'block', width: '100%', boxSizing: 'border-box', marginTop: 7, padding: 13, borderRadius: 9, border: '1px solid #d8d3c8' }}/></label><label>Confirm new password<input required minLength={8} type="password" value={confirm} onChange={e => setConfirm(e.target.value)} style={{ display: 'block', width: '100%', boxSizing: 'border-box', marginTop: 7, padding: 13, borderRadius: 9, border: '1px solid #d8d3c8' }}/></label><button disabled={busy} style={{ ...buttonStyle, justifyContent: 'center' }}>{busy ? 'Saving…' : 'Update password'}</button></form>}{saved && <div><p role="status">Your password has been changed. Sign in with the new password.</p><a href="/" style={{ ...buttonStyle, textDecoration: 'none' }}>Return to sign in <ArrowRight size={17}/></a></div>}</section></main>;
 }
 
+export function DashboardPage() {
+  const [data, setData] = useState<any>(null); const [error, setError] = useState(''); const [busy, setBusy] = useState(true);
+  useEffect(() => { api.get('/api/learning/dashboard').then(r => setData(r.data)).catch((e: any) => setError(e?.response?.data?.message || 'Please sign in to open your dashboard.')).finally(() => setBusy(false)); }, []);
+  const enrolled = useMemo(() => new Set((data?.enrollments || []).map((e: any) => e.course_id)), [data]);
+  const enroll = async (courseId: string) => { try { await api.post('/api/learning/enroll', { courseId }); const r = await api.get('/api/learning/dashboard'); setData(r.data); } catch (e: any) { setError(e?.response?.data?.message || 'Unable to enroll right now.'); } };
+  if (busy) return <main style={shellStyle}><section style={cardStyle}>Loading your dashboard…</section></main>;
+  if (error && !data) return <main style={shellStyle}><section style={{ ...cardStyle, maxWidth: 620 }}><ErrorNotice message={error}/><a href="/" style={buttonStyle}>Sign in</a></section></main>;
+  return <main style={shellStyle}><section style={cardStyle}><a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><ArrowLeft size={17}/> Home</a><header style={{ margin: '22px 0' }}><span style={{ fontSize: 12, letterSpacing: 1.5, fontWeight: 800 }}>STUDENT DASHBOARD</span><h1>My learning</h1><p>Choose an enrolled course to view modules, lessons and saved progress.</p></header>{error && <ErrorNotice message={error}/>}<div style={{ display: 'grid', gap: 16 }}>{(data?.courses || []).map((course: any) => <article key={course.id} style={{ border: '1px solid #e5e0d6', borderRadius: 14, padding: 20 }}><h2>{course.title}</h2><p>{course.description}</p>{enrolled.has(course.id) ? <a href={`/courses/${course.id}`} style={{ ...buttonStyle, textDecoration: 'none' }}>Open course <ArrowRight size={17}/></a> : <button onClick={() => enroll(course.id)} style={buttonStyle}>Enroll in course <ArrowRight size={17}/></button>}</article>)}</div><div style={{ marginTop: 26 }}><a href="/forgot-password">Forgot password?</a></div></section></main>;
+}
+
 export function CoursePage({ courseId }: { courseId: string }) {
   const [data, setData] = useState<any>(null); const [error, setError] = useState(''); const [busy, setBusy] = useState(true);
   useEffect(() => { api.get(`/api/learning/courses/${encodeURIComponent(courseId)}`).then(r => setData(r.data)).catch((e: any) => setError(e?.response?.data?.message || 'Unable to load this course.')).finally(() => setBusy(false)); }, [courseId]);
@@ -50,7 +60,8 @@ export function RouteApp({ App }: { App: ComponentType }) {
   if (path === '/auth/callback') return <AuthCallbackPage/>;
   if (path === '/forgot-password') return <ForgotPasswordPage/>;
   if (path === '/reset-password') return <ResetPasswordPage/>;
+  if (path === '/dashboard') return <DashboardPage/>;
   const course = path.match(/^\/courses\/([^/]+)$/); if (course) return <CoursePage courseId={decodeURIComponent(course[1])}/>;
   const lesson = path.match(/^\/lesson\/([^/]+)$/); if (lesson) return <LessonPage lessonId={decodeURIComponent(lesson[1])}/>;
-  return <App/>;
+  return <><App/><a href="/forgot-password" style={{ position: 'fixed', right: 18, bottom: 18, zIndex: 50, background: '#fff', border: '1px solid #ddd7ca', borderRadius: 999, padding: '9px 13px', textDecoration: 'none', fontSize: 13, fontWeight: 700, boxShadow: '0 5px 18px rgba(0,0,0,.08)' }}>Forgot password?</a></>;
 }

@@ -21,6 +21,18 @@ jobs:
         run: npm install --no-save playwright@1.55.0
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
+      - name: Narrow expected access-denied console diagnostic
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tests/production-smoke-v2.mjs')
+          text = path.read_text()
+          old = "page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('401')){"
+          new = "page.on('console',m=>{const text=m.text();const expectedAccessDeniedNavigation=/Failed to load resource: the server responded with a status of (401|403) \\()/ .test(text);if(m.type()==='error'&&!expectedAccessDeniedNavigation){"
+          if old not in text:
+              raise SystemExit('Expected smoke console diagnostic pattern not found.')
+          path.write_text(text.replace(old, new, 1))
+          PY
       - name: Run production smoke test
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

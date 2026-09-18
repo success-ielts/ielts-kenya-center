@@ -106,6 +106,14 @@ async function api(request: Request, env: Env): Promise<Response> {
   let body: any = {};
   if (method !== 'GET' && method !== 'HEAD') { try { body = await request.json(); } catch { body = {}; } }
 
+  if (method === 'GET' && path === '/llms.txt') {
+    const pages=await adminSupabase('/rest/v1/site_content?status=eq.published&select=content_key,title,body&order=title.asc');
+    const lines=['# IELTS Kenya Center','> IELTS preparation, practice and learning resources for students in Kenya.','','IELTS Kenya Center provides structured IELTS learning content, preparation resources and learner-focused study tools.',''];
+    if(Array.isArray(pages.data)&&pages.data.length){lines.push('## Public pages');for(const p of pages.data){const d=seoText(p.body?.seo?.description||p.body?.description||'',220);lines.push('- ['+p.title+']('+productionOrigin+'/page/'+encodeURIComponent(p.content_key)+')'+(d?' — '+d:''));}}
+    lines.push('','## Primary website',productionOrigin+'/','');
+    return new Response(lines.join('\n'),{headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'public, max-age=3600'}});
+  }
+
   if (method === 'GET' && path === '/robots.txt') {
     return new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /staff/\nDisallow: /dashboard\nDisallow: /login\nDisallow: /signup\nDisallow: /reset-password\nSitemap: ${productionOrigin}/sitemap.xml\n`, {headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'public, max-age=3600'}});
   }

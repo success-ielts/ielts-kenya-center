@@ -37,6 +37,16 @@ async function supabaseUser(env: RoleAuthEnv, token: string) {
   return { response, data };
 }
 
+async function getStaffActive(env: RoleAuthEnv, userId: string, token: string): Promise<boolean | null> {
+  const query = `/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=staff_active`;
+  const response = await fetch(`${env.SUPABASE_URL}${query}`, {
+    headers: { apikey: env.SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) return null;
+  const rows = await response.json() as any[];
+  return Array.isArray(rows) && rows.length ? rows[0]?.staff_active !== false : null;
+}
+
 export async function getUserRoles(env: RoleAuthEnv, userId: string, token: string): Promise<string[]> {
   const query = `/rest/v1/profile_roles?profile_id=eq.${encodeURIComponent(userId)}&select=role_id,roles(name)`;
   const response = await fetch(`${env.SUPABASE_URL}${query}`, {
@@ -68,6 +78,12 @@ export async function requireRoles(
   const roles = await getUserRoles(env, data.id, token);
   if (!roles.some(role => allowedRoles.includes(role))) {
     return { response: authJson({ message: 'You are not authorized to access this resource.', roles: [] }, 403), identity: null };
+  }
+
+  const privilegedRole = roles.some(role => ['platform_owner', 'super_admin', 'admin', 'academic_director', 'ielts_tutor', 'student_support', 'content_editor', 'marketing', 'exam_manager', 'finance', 'read_only_auditor'].includes(role));
+  if (privilegedRole) {
+    const staffActive = await getStaffActive(env, data.id, token);
+    if (staffActive === false) return { response: authJson({ message: 'Staff access is inactive.' }, 403), identity: null };
   }
 
   return { response: null, identity: { user: data, roles, token } };

@@ -106,13 +106,13 @@ function PublicCoursePage({ slug }: { slug:string }) {
   ]};
   return <main className="learner-shell">
     <Seo title={data.title} description={data.description} canonical={canonical} jsonLd={graph}/>
-    <section className="learner-hero"><div><span className="kicker">{type.toUpperCase()} • {data.level}</span><h1>{data.title}</h1><p>{data.description}</p><div className="hero-actions"><button className="primary-btn" onClick={()=>{window.location.href='/#signup'}}>Start this course <ArrowRight size={18}/></button><a className="secondary-btn" href="/page/ielts-courses">All IELTS courses</a></div></div></section>
+    <section className="learner-hero"><div><span className="kicker">{type.toUpperCase()} • {data.level}</span><h1>{data.title}</h1><p>{data.description}</p><div className="hero-actions"><button className="primary-btn" onClick={()=>{window.location.href='/?signup=1'}}>Start this course <ArrowRight size={18}/></button><a className="secondary-btn" href="/page/ielts-courses">All IELTS courses</a></div></div></section>
     <section className="learner-stats"><article><strong>{data.modules.length}</strong><span>Modules</span></article><article><strong>{data.total_lessons}</strong><span>Lessons</span></article><article><strong>{type}</strong><span>IELTS pathway</span></article></section>
     <section className="learner-section"><div className="section-heading"><div><span className="kicker">COURSE OVERVIEW</span><h2>What you will work through</h2></div><p>This public overview describes the curriculum structure. Individual lessons remain inside the learner area.</p></div>
       <div className="journey-grid">{data.modules.map((m,i)=><article className="journey-card" key={m.id}><span>{String(i+1).padStart(2,'0')}</span><h3>{m.title}</h3><p>{m.description||'Structured IELTS preparation module.'}</p><small>{m.lesson_count} published lesson{m.lesson_count===1?'':'s'}</small></article>)}</div>
     </section>
     <section className="section"><div className="section-heading"><div><span className="kicker">LEARNING OUTCOMES</span><h2>Build practical IELTS preparation skills.</h2></div></div><ul className="check-list">{outcomes.map(o=><li key={o}><CheckCircle2 size={18}/>{o}</li>)}</ul></section>
-    <section className="assessment section"><div className="assessment-card"><div><span className="kicker">READY TO LEARN?</span><h2>Create your learner account.</h2><p>Sign in or create an account to access enrolled course lessons, practice content and progress tracking.</p></div><button className="primary-btn" onClick={()=>{window.location.href='/#signup'}}>Create account <ArrowRight size={18}/></button></div></section>
+    <section className="assessment section"><div className="assessment-card"><div><span className="kicker">READY TO LEARN?</span><h2>Create your learner account.</h2><p>Sign in or create an account to access enrolled course lessons, practice content and progress tracking.</p></div><button className="primary-btn" onClick={()=>{window.location.href='/?signup=1'}}>Create account <ArrowRight size={18}/></button></div></section>
   </main>;
 }
 \nfunction CourseView({ courseId }: { courseId:string }) {
@@ -142,8 +142,7 @@ function App() {
   const [authBusy, setAuthBusy] = useState(false);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    api
+  useEffect(() => {\n    if (new URLSearchParams(window.location.search).get('signup') === '1') { setAuthMode('signup'); setAuthOpen(true); }\n   api
       .get('/api/auth/me')
       .then(({ data }) => {
         setUser(data.user);

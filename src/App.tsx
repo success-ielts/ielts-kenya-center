@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { api } from './api';
+import { destinationFor, isRoleDashboardDestination } from './auth-routing';
 import {
   ArrowRight,
   BookOpen,
@@ -41,7 +42,16 @@ function App() {
   useEffect(() => {
     api
       .get('/api/auth/me')
-      .then(({ data }) => setUser(data.user))
+      .then(({ data }) => {
+        if (data.user) {
+          const destination = destinationFor(data.user, data.roles);
+          if (isRoleDashboardDestination(destination)) {
+            window.location.replace(destination);
+            return;
+          }
+        }
+        setUser(data.user || null);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -76,7 +86,16 @@ function App() {
         authMode === 'signup' ? '/api/auth/signup' : '/api/auth/signin',
         payload
       );
-      if (data.user) setUser(data.user);
+      if (data.user) {
+        const me = await api.get('/api/auth/me');
+        const signedInUser = me.data?.user || data.user;
+        const destination = destinationFor(signedInUser, me.data?.roles);
+        if (isRoleDashboardDestination(destination)) {
+          window.location.replace(destination);
+          return;
+        }
+        setUser(signedInUser);
+      }
       setMessage(data.message || 'Signed in successfully.');
       if (authMode === 'signin' || data.user)
         setTimeout(() => setAuthOpen(false), 500);

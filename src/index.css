@@ -239,3 +239,13 @@ body { margin: 0; min-width: 320px; }
   .ops-search { min-width:0; }
   .ops-student-row, .ops-detail-row { align-items:flex-start; flex-direction:column; }
 }
+
+.ops-form { display:grid; gap:14px; }
+.ops-form label, .ops-form-grid label { display:grid; gap:6px; font-size:12px; font-weight:750; }
+.ops-form input, .ops-form textarea, .ops-form-grid input, .ops-form-grid select, .ops-form select { width:100%; border:1px solid #d8d3c8; border-radius:9px; padding:11px 12px; font:inherit; background:#fff; }
+.ops-form textarea { min-height:110px; resize:vertical; }
+.ops-form input[type="checkbox"] { width:auto; }
+.ops-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; align-items:end; }
+.ops-form-grid > .primary-btn { align-self:end; }
+.secondary-btn.compact { padding:9px 13px; font-size:12px; }
+@media (max-width:760px) { .ops-form-grid { grid-template-columns:1fr; } }

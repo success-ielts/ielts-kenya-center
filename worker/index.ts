@@ -56,7 +56,7 @@ async function isEnrolled(env: Env, studentId: string, courseId: string, token: 
   return { ok: result.response.ok, enrolled: Array.isArray(result.data) && result.data.length > 0 };
 }
 
-const adminRoles = ['super_admin', 'admin'];
+const adminRoles = ['super_admin', 'admin', 'platform_owner'];
 const staffRoles = ['academic_director', 'ielts_tutor', 'student_support', 'content_editor', 'marketing', 'exam_manager', 'finance', 'read_only_auditor'];
 
 function accessDeniedPage(status: number, message: string) {
@@ -377,6 +377,48 @@ async function api(request: Request, env: Env): Promise<Response> {
     });
   }
 
+  const adminStaffStatusMatch = path.match(/^\\/api\\/admin\\/staff\\/([^/]+)\\/status$/);
+  if (method === 'PATCH' && adminStaffStatusMatch) {
+    const auth = await adminAuth(request);
+    if (auth.response) return auth.response;
+    const targetId = decodeURIComponent(adminStaffStatusMatch[1]);
+    const active = body.active;
+    if (typeof active !== 'boolean') return error('Active status must be a boolean.', 400);
+    if (targetId === auth.identity!.user.id) return error('You cannot change your own staff status.', 409);
+
+    const [targetUser, profileResult, targetRolesResult] = await Promise.all([
+      adminSupabase(`/auth/v1/admin/users/${encodeURIComponent(targetId)}`),
+      adminSupabase(`/rest/v1/profiles?id=eq.${encodeURIComponent(targetId)}&select=id,staff_active`),
+      adminSupabase(`/rest/v1/profile_roles?profile_id=eq.${encodeURIComponent(targetId)}&select=roles(name)`),
+    ]);
+    if (!targetUser.response.ok) return error('Staff account not found.', 404);
+    if (!profileResult.response.ok || !targetRolesResult.response.ok) return error('Unable to load staff status.', 502);
+    const profile = Array.isArray(profileResult.data) ? profileResult.data[0] : null;
+    if (!profile) return error('Staff account not found.', 404);
+    const currentRoles = (Array.isArray(targetRolesResult.data) ? targetRolesResult.data : []).map((r: any) => r?.roles?.name).filter(Boolean);
+    if (!currentRoles.some((r: string) => staffManagementRoles.includes(r))) return error('Staff account not found.', 404);
+    if (currentRoles.includes('platform_owner')) return error('The platform owner status is protected.', 403);
+    if (currentRoles.some((r: string) => adminRoles.includes(r)) && !auth.identity!.roles.includes('super_admin')) {
+      return error('Only a super administrator can change administrator status.', 403);
+    }
+    if (!active && currentRoles.some((r: string) => adminRoles.includes(r))) {
+      const adminAssignments = await adminSupabase('/rest/v1/profile_roles?select=profile_id,roles!inner(name)&roles.name=in.(admin,super_admin,platform_owner)');
+      if (!adminAssignments.response.ok) return error('Unable to verify administrator protection.', 502);
+      const adminProfiles = new Set((Array.isArray(adminAssignments.data) ? adminAssignments.data : []).map((r: any) => r.profile_id));
+      if (adminProfiles.size <= 1) return error('The final authorized administrator cannot be deactivated.', 409);
+    }
+    const previousActive = profile.staff_active === false ? false : true;
+    if (previousActive === active) return error('Staff account is already in that status.', 409);
+    const result = await adminSupabase(`/rest/v1/profiles?id=eq.${encodeURIComponent(targetId)}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ staff_active: active, updated_at: new Date().toISOString() }),
+    });
+    if (!result.response.ok) return error('Unable to update staff status.', 502);
+    await writeStaffAudit(auth.identity!.user.id, targetId, active ? 'staff_activated' : 'staff_deactivated', { staff_active: previousActive }, { staff_active: active });
+    return json({ ok: true, staff_active: active });
+  }
+
   const adminStaffRoleMatch = path.match(/^\/api\/admin\/staff\/([^/]+)\/roles$/);
   if ((method === 'POST' || method === 'PATCH') && adminStaffRoleMatch) {
     const auth = await adminAuth(request);
@@ -422,7 +464,7 @@ async function api(request: Request, env: Env): Promise<Response> {
     if (!currentRoles.includes(roleName)) return error('That role is not currently assigned.', 409);
     const isAdminRole = adminRoles.includes(roleName);
     if (isAdminRole) {
-      const adminAssignments = await adminSupabase('/rest/v1/profile_roles?select=profile_id,roles!inner(name)&roles.name=in.(admin,super_admin)');
+      const adminAssignments = await adminSupabase('/rest/v1/profile_roles?select=profile_id,roles!inner(name)&roles.name=in.(admin,super_admin,platform_owner)');
       if (!adminAssignments.response.ok) return error('Unable to verify administrator protection.', 502);
       const adminProfiles = new Set((Array.isArray(adminAssignments.data) ? adminAssignments.data : []).map((r: any) => r.profile_id));
       const targetHasAnotherAdminRole = currentRoles.some((r: string) => adminRoles.includes(r) && r !== roleName);

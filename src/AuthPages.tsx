@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState, type ReactNode } from 'react';
 import { ArrowRight, Eye, EyeOff, GraduationCap, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
 import { api } from './api';
+import { destinationFor } from './auth-routing';
 import './auth.css';
 
 const productionOrigin = 'https://ielts-kenyacenter.or.ke';
@@ -22,17 +23,11 @@ function mapAuthError(err: any) {
   return err?.response?.data?.message || err?.message || 'We could not sign you in. Please try again.';
 }
 
-function destinationFor(user: any) {
-  const roles = [...(Array.isArray(user?.roles) ? user.roles : []), user?.role, user?.user_metadata?.role, user?.app_metadata?.role].filter(Boolean).map((v: any) => String(v).toLowerCase());
-  if (roles.some(r => ['admin', 'super_admin'].includes(r))) return '/admin/dashboard';
-  if (roles.some(r => ['staff', 'tutor', 'instructor'].includes(r))) return '/staff/dashboard';
-  return '/dashboard';
-}
 
 export function LoginPage() {
   const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [busy, setBusy] = useState(false); const [message, setMessage] = useState(''); const [googleBusy, setGoogleBusy] = useState(false); const [googleConfigured, setGoogleConfigured] = useState(false);
   useEffect(() => { api.get('/api/config-status').then(r => setGoogleConfigured(Boolean(r.data?.googleOAuthConfigured))).catch(() => setGoogleConfigured(false)); }, []);
-  const submit = async (event: FormEvent) => { event.preventDefault(); setMessage(''); if (!email.trim() || !password) { setMessage('Email and password are required.'); return; } setBusy(true); try { const { data } = await api.post('/api/auth/signin', { email: email.trim(), password }); window.location.replace(`${productionOrigin}${destinationFor(data?.user)}`); } catch (err: any) { setMessage(mapAuthError(err)); } finally { setBusy(false); } };
+  const submit = async (event: FormEvent) => { event.preventDefault(); setMessage(''); if (!email.trim() || !password) { setMessage('Email and password are required.'); return; } setBusy(true); try { const { data } = await api.post('/api/auth/signin', { email: email.trim(), password }); const me = await api.get('/api/auth/me'); const signedInUser = me.data?.user || data?.user; window.location.replace(`${productionOrigin}${destinationFor(signedInUser, me.data?.roles)}`); } catch (err: any) { setMessage(mapAuthError(err)); } finally { setBusy(false); } };
   const google = () => { setMessage(''); setGoogleBusy(true); window.location.assign(`${productionOrigin}/api/auth/google`); };
   return <AuthShell><div className="auth-card"><div className="auth-card-icon"><GraduationCap size={24} /></div><span className="kicker">IELTS KENYA CENTER</span><h2>Welcome back</h2><p className="auth-subtitle">Sign in to continue your preparation journey.</p><form onSubmit={submit} noValidate><label className="auth-field"><span>Email</span><div className="auth-input-wrap"><Mail size={17} /><input name="email" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" placeholder="you@example.com" required /></div></label><PasswordField value={password} onChange={setPassword} /><div className="auth-row"><a href="/forgot-password">Forgot password?</a></div>{message && <div className="auth-error" role="alert">{message}</div>}<button className="auth-primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={18} /></button></form>{googleConfigured && <><div className="auth-divider"><span>or</span></div><button type="button" className="google-btn" disabled={googleBusy} onClick={google}><span className="google-g">G</span>{googleBusy ? 'Connecting…' : 'Continue with Google'}</button></>}<p className="auth-switch">New to the platform? <a href="/register">Create an account</a></p></div></AuthShell>;
 }

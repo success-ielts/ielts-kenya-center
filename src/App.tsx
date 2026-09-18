@@ -237,10 +237,8 @@ function App() {
       .finally(() => setLoading(false));
   }, []);
   const openAuth = (mode: 'signin' | 'signup') => {
-    setAuthMode(mode);
-    setMessage('');
-    setAuthOpen(true);
     setMobileNav(false);
+    window.location.assign(mode === 'signin' ? '/login' : '/register');
   };
   const signOut = async () => {
     await api.post('/api/auth/signout');

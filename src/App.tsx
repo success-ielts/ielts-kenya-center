@@ -21,13 +21,13 @@ type User = {
   user_metadata?: { full_name?: string };
 } | null;
 const sections = [
-  'Preparation',
-  'Courses',
-  'Practice',
-  'Mock Tests',
-  'Tutors',
-  'Pricing',
-  'Resources',
+  { label: 'Preparation', href: '/page/ielts-preparation-kenya' },
+  { label: 'Courses', href: '/page/ielts-courses' },
+  { label: 'Practice', href: '/page/ielts-practice' },
+  { label: 'Mock Tests', href: '#mock-tests' },
+  { label: 'Tutors', href: '#tutors' },
+  { label: 'Pricing', href: '#pricing' },
+  { label: 'Resources', href: '/page/ielts-resources' },
 ];
 
 function PhotoStrip({ items }: { items: Array<{ src: string; alt: string }> }) {
@@ -253,8 +253,8 @@ function App() {
         </a>
         <nav className="desktop-nav" aria-label="Primary navigation">
           {sections.map(item => (
-            <a key={item} href={`#${item.toLowerCase().replaceAll(' ', '-')}`}>
-              {item}
+            <a key={item.label} href={item.href}>
+              {item.label}
             </a>
           ))}
           <a href="#about">About Us</a>
@@ -283,11 +283,11 @@ function App() {
         <nav className="mobile-nav">
           {sections.map(item => (
             <a
-              key={item}
-              href={`#${item.toLowerCase().replaceAll(' ', '-')}`}
+              key={item.label}
+              href={item.href}
               onClick={() => setMobileNav(false)}
             >
-              {item}
+              {item.label}
             </a>
           ))}
           <a href="#about" onClick={() => setMobileNav(false)}>
@@ -413,9 +413,27 @@ function App() {
               <article className="skill-card skill-photo-card" key={t}>
                 <img className="skill-photo" src={image} alt={alt} loading="lazy" />
                 <div className="skill-photo-body">
-                  <h3>{t}</h3><p>{d}</p><a href="#practice">Explore {t} <ArrowRight size={16} /></a>
+                  <h3>{t}</h3><p>{d}</p><a href={t === 'Listening' ? '/page/ielts-listening' : t === 'Reading' ? '/page/ielts-reading' : t === 'Writing' ? '/page/ielts-writing' : '/page/ielts-speaking'}>Explore {t} <ArrowRight size={16} /></a>
                 </div>
               </article>
+            ))}
+          </div>
+        </section>
+        <section className="section" id="practice">
+          <div className="section-heading">
+            <div><span className="kicker">PRACTICE LIBRARY</span><h2>Turn every study session into useful practice.</h2></div>
+            <p>Choose a skill, practise focused task types and use review to decide what to work on next.</p>
+          </div>
+          <div className="journey-grid">
+            {[
+              ['Listening', 'Focused listening sets, question-type practice and review.', '/page/ielts-listening'],
+              ['Reading', 'Passage strategies, locating evidence and timed practice.', '/page/ielts-reading'],
+              ['Writing', 'Task planning, organisation, language review and rewriting.', '/page/ielts-writing'],
+              ['Speaking', 'Structured speaking prompts, fluency practice and feedback.', '/page/ielts-speaking'],
+            ].map(([title, description, href]) => (
+              <a key={title} href={href} className="journey-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+                <span>SKILL</span><h3>{title}</h3><p>{description}</p><strong>Open {title} practice <ArrowRight size={16} /></strong>
+              </a>
             ))}
           </div>
         </section>
@@ -497,7 +515,7 @@ function App() {
             ]}
           />
         </section>
-        <section className="resource-band" id="resources"><div><BookOpen size={28} /><div><strong>Resources for better preparation</strong><span>Guides, vocabulary, grammar, writing and speaking resources will live in one searchable library.</span></div></div><a href="#contact">Explore the platform <ArrowRight size={17} /></a></section>
+        <section className="resource-band" id="resources"><div><BookOpen size={28} /><div><strong>Resources for better preparation</strong><span>Guides, vocabulary, grammar, writing and speaking resources will live in one searchable library.</span></div></div><a href="/page/ielts-resources">Explore resources <ArrowRight size={17} /></a></section>
         <section className="section" style={{ paddingTop: 20 }}>
           <PhotoStrip
             items={[
@@ -508,7 +526,7 @@ function App() {
         </section>
         <section className="section about" id="about"><div><span className="kicker">ABOUT IELTS KENYA CENTER</span><h2>A Kenyan-focused learning platform for global goals.</h2></div><div><p>IELTS Kenya Center is an IDP-authorized IELTS coaching and preparation provider for candidates, including job seekers pursuing international employment opportunities. We provide structured preparation, realistic practice and measurable progress support.</p><p>We provide coaching and preparation; IELTS testing, test administration and official results remain the responsibility of the official IELTS test services.</p></div></section>
       </main>}
-      <footer id="contact"><div className="footer-main"><div className="brand footer-brand"><img className="brand-logo" src="/logo.svg" alt="IELTS Kenya Center" /></div><div><strong>Platform</strong><a href="#courses">Courses</a><a href="#practice">Practice</a><a href="#mock-tests">Mock Tests</a></div><div><strong>Support</strong><a href="#resources">Resources</a><a href="#contact">Contact</a><a href="#about">About Us</a></div><div><strong>Account</strong><button onClick={() => openAuth('signin')}>Student Login</button><button onClick={() => openAuth('signup')}>Create Account</button></div></div><div className="footer-bottom"><span>© 2026 IELTS Kenya Center. Prepare • Practice • Achieve.</span><span>Privacy • Terms • Cookies</span></div></footer>
+      <footer id="contact"><div className="footer-main"><div className="brand footer-brand"><img className="brand-logo" src="/logo.svg" alt="IELTS Kenya Center" /></div><div><strong>Platform</strong><a href="/page/ielts-courses">Courses</a><a href="/page/ielts-practice">Practice</a><a href="#mock-tests">Mock Tests</a><a href="/page/ielts-preparation-kenya">Preparation</a></div><div><strong>Skills</strong><a href="/page/ielts-listening">Listening</a><a href="/page/ielts-reading">Reading</a><a href="/page/ielts-writing">Writing</a><a href="/page/ielts-speaking">Speaking</a></div><div><strong>Support</strong><a href="/page/ielts-resources">Resources</a><a href="#contact">Contact</a><a href="#about">About Us</a></div><div><strong>Account</strong><button onClick={() => openAuth('signin')}>Student Login</button><button onClick={() => openAuth('signup')}>Create Account</button></div></div><div className="footer-bottom"><span>© 2026 IELTS Kenya Center. Prepare • Practice • Achieve.</span><span>Privacy • Terms • Cookies</span></div></footer>
       {!loading && user && <div className="session-bar"><span>Signed in as <strong>{user.email}</strong></span><button onClick={signOut}>Sign out</button></div>}
       {authOpen && <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="auth-title"><div className="auth-modal"><button className="modal-close" aria-label="Close" onClick={() => setAuthOpen(false)}><X /></button><div className="auth-icon"><GraduationCap /></div><span className="kicker">IELTS KENYA CENTER</span><h2 id="auth-title">{authMode === 'signup' ? 'Create your learning account' : 'Welcome back'}</h2><p>{authMode === 'signup' ? 'Start your learner profile and preparation journey.' : 'Continue your preparation journey.'}</p><form onSubmit={submitAuth}>{authMode === 'signup' && <label>Full name<input name="fullName" autoComplete="name" required /></label>}<label>Email<input name="email" type="email" autoComplete="email" required /></label><label>Password<input name="password" type="password" minLength={8} autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'} required /></label>{message && <div className="form-message" role="alert">{message}</div>}<button className="primary-btn full" disabled={authBusy}>{authBusy ? 'Please wait…' : authMode === 'signup' ? 'Create account' : 'Sign in'} <ArrowRight size={18} /></button></form><button className="switch-auth" onClick={() => { setAuthMode(authMode === 'signup' ? 'signin' : 'signup'); setMessage(''); }}>{authMode === 'signup' ? 'Already have an account? Sign in' : 'New to the platform? Create an account'}</button></div></div>}
     </div>

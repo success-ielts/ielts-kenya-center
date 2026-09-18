@@ -479,6 +479,78 @@ async function api(request: Request, env: Env): Promise<Response> {
     return json({ ok: true, action, role: roleName, roles: currentRoles.filter((r: string) => r !== roleName) });
   }
 
+  if (method === 'GET' && path === '/api/admin/pages') {
+    const auth = await adminAuth(request); if (auth.response) return auth.response;
+    const search = (url.searchParams.get('search') || '').trim().toLowerCase();
+    const result = await adminSupabase('/rest/v1/site_content?select=id,content_key,title,body,status,updated_by,created_at,updated_at&order=updated_at.desc');
+    if (!result.response.ok) return error('Unable to load pages.', 502);
+    let pages = Array.isArray(result.data) ? result.data : [];
+    if (search) pages = pages.filter((p:any) => [p.content_key,p.title,p.status].some(v => String(v || '').toLowerCase().includes(search)));
+    return json({ ok: true, pages: pages.slice(0, 200) });
+  }
+
+  if (method === 'POST' && path === '/api/admin/pages') {
+    const auth = await adminAuth(request); if (auth.response) return auth.response;
+    const title = String(body.title || '').trim();
+    const contentKey = String(body.contentKey || title).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    if (!title || !contentKey) return error('Page title and key are required.', 400);
+    const status = ['draft','published','archived'].includes(String(body.status)) ? String(body.status) : 'draft';
+    let pageBody = body.body;
+    if (typeof pageBody === 'string') { try { pageBody = JSON.parse(pageBody); } catch { return error('Page body must be valid JSON.', 400); } }
+    if (!pageBody || typeof pageBody !== 'object' || Array.isArray(pageBody)) return error('Page body must be a JSON object.', 400);
+    const result = await adminSupabase('/rest/v1/site_content', {
+      method:'POST', headers:{Prefer:'return=representation'},
+      body:JSON.stringify({ content_key:contentKey, title, body:pageBody, status, updated_by:auth.identity!.user.id })
+    });
+    if (!result.response.ok) return error(result.response.status === 409 ? 'A page with this key already exists.' : 'Unable to create page.', result.response.status === 409 ? 409 : 502);
+    return json({ ok:true, page:Array.isArray(result.data) ? result.data[0] || null : null }, {status:201});
+  }
+
+  const adminPageMatch = path.match(/^\/api\/admin\/pages\/([^/]+)$/);
+  if (method === 'PATCH' && adminPageMatch) {
+    const auth = await adminAuth(request); if (auth.response) return auth.response;
+    const pageId = decodeURIComponent(adminPageMatch[1]);
+    const existing = await adminSupabase(`/rest/v1/site_content?id=eq.${encodeURIComponent(pageId)}&select=id`);
+    if (!existing.response.ok) return error('Unable to verify page.', 502);
+    if (!Array.isArray(existing.data) || !existing.data.length) return error('Page not found.', 404);
+    const payload:any = { updated_by:auth.identity!.user.id, updated_at:new Date().toISOString() };
+    if (body.title !== undefined) payload.title = String(body.title).trim();
+    if (body.contentKey !== undefined) {
+      const key = String(body.contentKey).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+      if (!key) return error('Page key is required.', 400);
+      payload.content_key = key;
+    }
+    if (body.status !== undefined) {
+      if (!['draft','published','archived'].includes(String(body.status))) return error('Invalid page status.', 400);
+      payload.status = String(body.status);
+    }
+    if (body.body !== undefined) {
+      let pageBody = body.body;
+      if (typeof pageBody === 'string') { try { pageBody = JSON.parse(pageBody); } catch { return error('Page body must be valid JSON.', 400); } }
+      if (!pageBody || typeof pageBody !== 'object' || Array.isArray(pageBody)) return error('Page body must be a JSON object.', 400);
+      payload.body = pageBody;
+    }
+    if (payload.title === '') return error('Page title is required.', 400);
+    const result = await adminSupabase(`/rest/v1/site_content?id=eq.${encodeURIComponent(pageId)}`, {method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});
+    if (!result.response.ok) return error(result.response.status === 409 ? 'A page with this key already exists.' : 'Unable to update page.', result.response.status === 409 ? 409 : 502);
+    return json({ok:true,page:Array.isArray(result.data) ? result.data[0] || null : null});
+  }
+
+  if (method === 'GET' && path === '/api/pages') {
+    const result = await supabase(env, '/rest/v1/site_content?status=eq.published&select=content_key,title,body,updated_at&order=title.asc');
+    if (!result.response.ok) return error('Unable to load published pages.', 502);
+    return json({ok:true,pages:Array.isArray(result.data) ? result.data : []},{headers:{'Cache-Control':'no-store'}});
+  }
+
+  const publicPageMatch = path.match(/^\/api\/pages\/([^/]+)$/);
+  if (method === 'GET' && publicPageMatch) {
+    const key = decodeURIComponent(publicPageMatch[1]);
+    const result = await supabase(env, `/rest/v1/site_content?content_key=eq.${encodeURIComponent(key)}&status=eq.published&select=content_key,title,body,updated_at`);
+    if (!result.response.ok) return error('Unable to load page.', 502);
+    if (!Array.isArray(result.data) || !result.data.length) return error('Page not found.', 404);
+    return json({ok:true,page:result.data[0]});
+  }
+
   if (method === 'GET' && path === '/api/admin/courses') {
     const auth = await adminAuth(request); if (auth.response) return auth.response;
     const search = (url.searchParams.get('search') || '').trim().toLowerCase();
@@ -592,7 +664,73 @@ async function api(request: Request, env: Env): Promise<Response> {
     if (auth.response) return auth.response;
     const studentId = auth.user.id;
 
-    if (method === 'GET' && path === '/api/learning/dashboard') {
+    if (method === 'GET' && path === '/api/admin/learning') {
+    const auth = await adminAuth(request); if (auth.response) return auth.response;
+    const coursesResult = await adminSupabase('/rest/v1/courses?select=id,slug,title,description,level,ielts_type,is_published,sort_order&order=sort_order.asc,created_at.desc');
+    const modulesResult = await adminSupabase('/rest/v1/course_modules?select=id,course_id,title,description,sort_order&order=sort_order.asc');
+    const lessonsResult = await adminSupabase('/rest/v1/lessons?select=id,module_id,title,lesson_type,duration_minutes,sort_order,is_published,content,updated_at&order=sort_order.asc');
+    if (!coursesResult.response.ok || !modulesResult.response.ok || !lessonsResult.response.ok) return error('Unable to load learning content.', 502);
+    return json({ok:true,courses:coursesResult.data||[],modules:modulesResult.data||[],lessons:lessonsResult.data||[]});
+  }
+
+  if (method === 'POST' && path === '/api/admin/modules') {
+    const auth = await adminAuth(request); if (auth.response) return auth.response;
+    const courseId=String(body.courseId||'').trim(), title=String(body.title||'').trim();
+    if(!courseId||!title) return error('Course and module title are required.',400);
+    const course=await adminSupabase(`/rest/v1/courses?id=eq.${encodeURIComponent(courseId)}&select=id`);
+    if(!course.response.ok||!Array.isArray(course.data)||!course.data.length) return error('Course not found.',404);
+    const result=await adminSupabase('/rest/v1/course_modules',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({course_id:courseId,title,description:body.description?String(body.description).trim():null,sort_order:Number(body.sortOrder)||0})});
+    if(!result.response.ok) return error('Unable to create module.',502);
+    return json({ok:true,module:Array.isArray(result.data)?result.data[0]||null:null},{status:201});
+  }
+
+  const adminModuleMatch=path.match(/^\/api\/admin\/modules\/([^/]+)$/);
+  if(method==='PATCH'&&adminModuleMatch){
+    const auth=await adminAuth(request); if(auth.response)return auth.response;
+    const id=decodeURIComponent(adminModuleMatch[1]);
+    const payload:any={};
+    if(body.title!==undefined) payload.title=String(body.title).trim();
+    if(body.description!==undefined) payload.description=body.description?String(body.description).trim():null;
+    if(body.sortOrder!==undefined) payload.sort_order=Number(body.sortOrder)||0;
+    if(!Object.keys(payload).length)return error('No module changes supplied.',400);
+    const result=await adminSupabase(`/rest/v1/course_modules?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});
+    if(!result.response.ok)return error('Unable to update module.',502);
+    if(!Array.isArray(result.data)||!result.data.length)return error('Module not found.',404);
+    return json({ok:true,module:result.data[0]});
+  }
+
+  if (method === 'POST' && path === '/api/admin/lessons') {
+    const auth = await adminAuth(request); if (auth.response) return auth.response;
+    const moduleId=String(body.moduleId||'').trim(), title=String(body.title||'').trim();
+    if(!moduleId||!title)return error('Module and lesson title are required.',400);
+    const module=await adminSupabase(`/rest/v1/course_modules?id=eq.${encodeURIComponent(moduleId)}&select=id`);
+    if(!module.response.ok||!Array.isArray(module.data)||!module.data.length)return error('Module not found.',404);
+    const lessonType=['lesson','video','exercise','quiz'].includes(String(body.lessonType))?String(body.lessonType):'lesson';
+    let content=body.content;
+    if(typeof content==='string'){try{content=JSON.parse(content)}catch{return error('Lesson content must be valid JSON.',400)}}
+    if(!content||typeof content!=='object'||Array.isArray(content))return error('Lesson content must be a JSON object.',400);
+    const result=await adminSupabase('/rest/v1/lessons',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({module_id:moduleId,title,lesson_type:lessonType,content,duration_minutes:body.durationMinutes===null||body.durationMinutes===undefined?null:Number(body.durationMinutes)||0,sort_order:Number(body.sortOrder)||0,is_published:Boolean(body.isPublished)})});
+    if(!result.response.ok)return error('Unable to create lesson.',502);
+    return json({ok:true,lesson:Array.isArray(result.data)?result.data[0]||null:null},{status:201});
+  }
+
+  const adminLessonMatch=path.match(/^\/api\/admin\/lessons\/([^/]+)$/);
+  if(method==='PATCH'&&adminLessonMatch){
+    const auth=await adminAuth(request); if(auth.response)return auth.response;
+    const id=decodeURIComponent(adminLessonMatch[1]), payload:any={updated_at:new Date().toISOString()};
+    if(body.title!==undefined) payload.title=String(body.title).trim();
+    if(body.lessonType!==undefined){if(!['lesson','video','exercise','quiz'].includes(String(body.lessonType)))return error('Invalid lesson type.',400);payload.lesson_type=String(body.lessonType);}
+    if(body.content!==undefined){let content=body.content;if(typeof content==='string'){try{content=JSON.parse(content)}catch{return error('Lesson content must be valid JSON.',400)}}if(!content||typeof content!=='object'||Array.isArray(content))return error('Lesson content must be a JSON object.',400);payload.content=content;}
+    if(body.durationMinutes!==undefined)payload.duration_minutes=body.durationMinutes===null?null:Number(body.durationMinutes)||0;
+    if(body.sortOrder!==undefined)payload.sort_order=Number(body.sortOrder)||0;
+    if(body.isPublished!==undefined)payload.is_published=Boolean(body.isPublished);
+    const result=await adminSupabase(`/rest/v1/lessons?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});
+    if(!result.response.ok)return error('Unable to update lesson.',502);
+    if(!Array.isArray(result.data)||!result.data.length)return error('Lesson not found.',404);
+    return json({ok:true,lesson:result.data[0]});
+  }
+
+  if (method === 'GET' && path === '/api/learning/dashboard') {
       const [coursesResult, enrollmentsResult, progressResult] = await Promise.all([
         supabase(env, '/rest/v1/courses?is_published=eq.true&select=id,slug,title,description,level,ielts_type,thumbnail_url,sort_order&order=sort_order.asc', {}, auth.token),
         supabase(env, `/rest/v1/enrollments?student_id=eq.${encodeURIComponent(studentId)}&select=id,course_id,status,enrolled_at,completed_at`, {}, auth.token),

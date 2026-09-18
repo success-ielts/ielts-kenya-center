@@ -30,7 +30,7 @@ const sections = [
   { label: 'Resources', href: '/page/ielts-resources' },
 ];
 
-function LearningIntelligence() {
+function LearningIntelligence({ onStart }: { onStart: () => void }) {
   const [goal, setGoal] = useState<'study' | 'work' | 'migration' | 'improve'>('study');
   const [band, setBand] = useState('7.0');
   const plans = {
@@ -59,7 +59,7 @@ function LearningIntelligence() {
           <label>Target band<select value={band} onChange={e => setBand(e.target.value)}>{['6.0','6.5','7.0','7.5','8.0','8.5','9.0'].map(v => <option key={v}>{v}</option>)}</select></label>
           <div className="ai-recommendation"><span className="status-dot" /><div><small>NEXT RECOMMENDATION</small><strong>{goalLabels[goal]} • Band {band}</strong><p>{plans[goal][0]}. Your pathway can prioritize the skills and practice history that need the most attention.</p></div></div>
           <div className="ai-path">{plans[goal].map((item, i) => <div key={item}><span>{String(i + 1).padStart(2, '0')}</span><strong>{item}</strong>{i < plans[goal].length - 1 && <i />}</div>)}</div>
-          <button className="primary-btn" onClick={() => openAuth('signup')}>Build my learning profile <ArrowRight size={17} /></button>
+          <button className="primary-btn" onClick={onStart}>Build my learning profile <ArrowRight size={17} /></button>
         </div>
         <div className="ai-capabilities">
           {[
@@ -73,6 +73,58 @@ function LearningIntelligence() {
         </div>
       </div>
       <p className="ai-note">Learning recommendations are guidance features, not official IELTS scoring or exam results. Official IELTS testing and results remain with the relevant official test services.</p>
+    </section>
+  );
+}
+
+function SmartAssessment({ onStart }: { onStart: () => void }) {
+  const [type, setType] = useState<'academic' | 'general'>('academic');
+  const [currentBand, setCurrentBand] = useState('5.5');
+  const [targetBand, setTargetBand] = useState('7.0');
+  const [timeline, setTimeline] = useState('8');
+  const [hours, setHours] = useState('6');
+  const [saved, setSaved] = useState(false);
+
+  const gap = Math.max(0, Number(targetBand) - Number(currentBand));
+  const focus = gap >= 2 ? 'Build foundations first, then move into timed skill practice.' : gap >= 1 ? 'Prioritize weak skills, structured practice and weekly timed work.' : 'Focus on precision, exam technique and consistent mock performance.';
+  const intensity = Number(hours) >= 8 ? 'High' : Number(hours) >= 5 ? 'Balanced' : 'Focused';
+  const timelineLabel = timeline === '4' ? '4 weeks' : timeline === '8' ? '8 weeks' : timeline === '12' ? '12 weeks' : '16+ weeks';
+
+  const buildPlan = () => {
+    const profile = { ieltsType: type, currentBand, targetBand, timeline, weeklyHours: hours };
+    try {
+      sessionStorage.setItem('ielts_learning_profile', JSON.stringify(profile));
+      setSaved(true);
+    } catch {}
+  };
+
+  return (
+    <section className="section smart-assessment" id="smart-assessment">
+      <div className="section-heading">
+        <div><span className="kicker">SMART START</span><h2>Turn your goal into a practical study plan.</h2></div>
+        <p>Give the planning engine a few inputs. It creates a starting pathway now and can become more personalized as real practice data is collected.</p>
+      </div>
+      <div className="smart-assessment-grid">
+        <div className="smart-form">
+          <label>IELTS pathway<select value={type} onChange={e => setType(e.target.value as typeof type)}><option value="academic">Academic</option><option value="general">General Training</option></select></label>
+          <label>Current estimated band<select value={currentBand} onChange={e => setCurrentBand(e.target.value)}>{['4.0','4.5','5.0','5.5','6.0','6.5','7.0','7.5','8.0'].map(v => <option key={v}>{v}</option>)}</select></label>
+          <label>Target band<select value={targetBand} onChange={e => setTargetBand(e.target.value)}>{['6.0','6.5','7.0','7.5','8.0','8.5','9.0'].map(v => <option key={v}>{v}</option>)}</select></label>
+          <label>Exam timeline<select value={timeline} onChange={e => setTimeline(e.target.value)}><option value="4">4 weeks</option><option value="8">8 weeks</option><option value="12">12 weeks</option><option value="16">16+ weeks</option></select></label>
+          <label>Weekly study time<select value={hours} onChange={e => setHours(e.target.value)}><option value="3">3 hours</option><option value="6">6 hours</option><option value="8">8 hours</option><option value="12">12+ hours</option></select></label>
+          <button className="primary-btn full" onClick={buildPlan}>{saved ? 'Plan saved for this session' : 'Build my starting plan'} <ArrowRight size={18} /></button>
+        </div>
+        <div className="smart-plan">
+          <div className="smart-plan-top"><span>STARTING PLAN</span><strong>{intensity} LOAD</strong></div>
+          <div className="smart-target"><span>{type === 'academic' ? 'ACADEMIC IELTS' : 'GENERAL TRAINING'}</span><strong>{currentBand} → {targetBand}</strong><small>{timelineLabel} • {hours}+ hours/week</small></div>
+          <div className="smart-plan-list">
+            <div><span>01</span><div><strong>Primary focus</strong><p>{focus}</p></div></div>
+            <div><span>02</span><div><strong>Weekly rhythm</strong><p>Learn → practise → review → repeat, with one timed session each week.</p></div></div>
+            <div><span>03</span><div><strong>Next checkpoint</strong><p>Use a diagnostic or mock to replace estimates with actual performance data.</p></div></div>
+          </div>
+          <button className="secondary-btn" onClick={onStart}>Continue to learner profile <ArrowRight size={17} /></button>
+          <small className="smart-note">The current band is self-estimated, not an official IELTS score. Your choices are stored only in this browser session until connected to your learner profile.</small>
+        </div>
+      </div>
     </section>
   );
 }
@@ -396,7 +448,7 @@ function App() {
             </div>
           </div>
         </section>
-        <LearningIntelligence />
+        <LearningIntelligence onStart={() => openAuth('signup')} />
         <section className="global-pathways section" id="pathways">
           <div className="section-heading">
             <div><span className="kicker">YOUR GOAL. YOUR PATH.</span><h2>One platform for the journey after IELTS, too.</h2></div>

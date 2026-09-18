@@ -30,6 +30,31 @@ const sections = [
   'Resources',
 ];
 
+function PhotoStrip({ items }: { items: Array<{ src: string; alt: string }> }) {
+  return (
+    <div
+      aria-label="IELTS learning photography"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        gap: 14,
+        marginTop: 28,
+      }}
+    >
+      {items.map(item => (
+        <figure key={item.src} style={{ margin: 0, borderRadius: 16, overflow: 'hidden', background: '#eef1ee', border: '1px solid #e1e5e2' }}>
+          <img
+            src={item.src}
+            alt={item.alt}
+            loading="lazy"
+            style={{ display: 'block', width: '100%', height: 190, objectFit: 'cover' }}
+          />
+        </figure>
+      ))}
+    </div>
+  );
+}
+
 function LearningDashboard({ user, onSignOut }: { user: User; onSignOut: () => Promise<void> }) { const [courses, setCourses] = useState<any[]>([]); const [enrollments, setEnrollments] = useState<any[]>([]); const [progress, setProgress] = useState<any[]>([]); const [busyCourse, setBusyCourse] = useState(''); const [message, setMessage] = useState(''); const load = async () => { const { data } = await api.get('/api/learning/dashboard'); setCourses(data.courses || []); setEnrollments(data.enrollments || []); setProgress(data.progress || []); }; useEffect(() => { load().catch(() => setMessage('We could not load your learning dashboard. Please try again.')); }, []); const enrolled = new Set(enrollments.map(item => item.course_id)); const enroll = async (courseId: string) => { setBusyCourse(courseId); setMessage(''); try { await api.post('/api/learning/enroll', { courseId }); await load(); setMessage('Course added to your learning plan.'); } catch (err: any) { setMessage(err?.response?.data?.message || err?.message || 'Unable to enroll right now.'); } finally { setBusyCourse(''); } }; const completion = progress.length ? Math.round(progress.reduce((sum, item) => sum + Number(item.percent || 0), 0) / progress.length) : 0; return <main className="learner-shell"><section className="learner-hero"><div><span className="kicker">STUDENT DASHBOARD</span><h1>Welcome back{user?.user_metadata?.full_name ? `, ${user.user_metadata.full_name}` : ''}.</h1><p>Your preparation is organized in one place. Choose a course, continue learning and build measurable progress toward your target.</p></div><div className="learner-actions"><span>{user?.email}</span><button className="secondary-btn" onClick={onSignOut}>Sign out</button></div></section><section className="learner-stats"><article><strong>{enrollments.length}</strong><span>Courses enrolled</span></article><article><strong>{progress.filter(item => item.status === 'completed').length}</strong><span>Lessons completed</span></article><article><strong>{completion}%</strong><span>Learning progress</span></article></section>{message && <div className="dashboard-message" role="status">{message}</div>}<section className="learner-section"><div className="section-heading"><div><span className="kicker">MY LEARNING</span><h2>Continue your preparation.</h2></div><p>Start with a structured course and build from foundations into skill-specific practice.</p></div><div className="course-grid">{courses.map(course => <article className="course-card" key={course.id}><span className="course-type">{String(course.ielts_type || '').replaceAll('_', ' ').toUpperCase()}</span><h3>{course.title}</h3><p>{course.description}</p><div className="course-meta"><span>{course.level}</span><span>Prepare • Practice</span></div>{enrolled.has(course.id) ? <button className="primary-btn full" onClick={() => window.location.assign('/learn/course/'+encodeURIComponent(course.id))}>Continue course <ArrowRight size={17} /></button> : <button className="secondary-btn full" disabled={busyCourse === course.id} onClick={() => enroll(course.id)}>{busyCourse === course.id ? 'Adding…' : 'Add to my learning plan'} <ArrowRight size={17} /></button>}</article>)}</div></section><section className="learner-section learner-next"><div><span className="kicker">NEXT BUILD</span><h2>Lessons, practice and progress tracking.</h2><p>The learning core is connected to Supabase. Course modules and individual lessons are the next layer of the learning experience.</p></div><div className="next-card"><Target size={22} /><strong>Keep your target visible.</strong><span>Use your profile to shape the study plan around IELTS type, target band and exam timeline.</span></div></section></main>; }
 
 function Seo({ title, description, canonical, type='website', jsonLd }: { title:string; description:string; canonical?:string; type?:string; jsonLd?:any }) {
@@ -310,7 +335,7 @@ function App() {
           <div className="hero-panel hero-photo-panel">
             <img
               className="hero-student-photo"
-              src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=85"
+              src="/resources/ielts/pexels-abubakar-mamuda-2150975575-32815203 .jpg"
               alt="University students studying together with books and laptops"
               loading="eager"
               fetchPriority="high"
@@ -365,6 +390,13 @@ function App() {
               </article>
             ))}
           </div>
+          <PhotoStrip
+            items={[
+              { src: '/resources/ielts/pexels-polina-tankilevitch-6929187 .jpg', alt: 'Student preparing with study materials' },
+              { src: '/resources/ielts/pexels-thirdman-5649416 .jpg', alt: 'Learners working through an English study session' },
+              { src: '/resources/ielts/pexels-mikhail-nilov-9158715 .jpg', alt: 'Student focused on academic preparation' },
+            ]}
+          />
         </section>
         <section className="dark-section" id="courses">
           <div className="section-heading light">
@@ -373,10 +405,10 @@ function App() {
           </div>
           <div className="skill-grid">
             {[
-              ['Listening','Train comprehension, note completion, matching and exam timing.','https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=900&q=80','Student practising IELTS listening with focused study materials.'],
-              ['Reading','Build passage strategies, question-type accuracy and pacing.','https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=900&q=80','Student reading and preparing for an academic English assessment.'],
-              ['Writing','Develop task response, coherence, vocabulary and grammar.','https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80','Handwriting notes while preparing an academic writing task.'],
-              ['Speaking','Practice Parts 1–3 with timed prompts, recording and feedback.','https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=900&q=80','Student speaking during a guided academic session.'],
+              ['Listening','Train comprehension, note completion, matching and exam timing.','/resources/ielts/pexels-tosin-olowoleni-2148141635-34162710 .jpg','Student practising IELTS listening with focused study materials.'],
+              ['Reading','Build passage strategies, question-type accuracy and pacing.','/resources/ielts/markus-winkler-_bpu1M6OFy8-unsplash .jpg','Student reading and preparing for an academic English assessment.'],
+              ['Writing','Develop task response, coherence, vocabulary and grammar.','/resources/ielts/annie-spratt-fvaB1MK6NxM-unsplash .jpg','Handwriting notes while preparing an academic writing task.'],
+              ['Speaking','Practice Parts 1–3 with timed prompts, recording and feedback.','/resources/ielts/pexels-fajar-herlambang-studio-TmdrCRVDOnQ-unsplash .jpg','Student speaking during a guided academic session.'],
             ].map(([t, d, image, alt]) => (
               <article className="skill-card skill-photo-card" key={t}>
                 <img className="skill-photo" src={image} alt={alt} loading="lazy" />
@@ -388,6 +420,12 @@ function App() {
           </div>
         </section>
         <section className="assessment section" id="assessment">
+          <PhotoStrip
+            items={[
+              { src: '/resources/ielts/pexels-abdallah-mallya-489932967-16187414 .jpg', alt: 'IELTS learner in an academic study setting' },
+              { src: '/resources/ielts/pexels-gabby-k-6281959 .jpg', alt: 'Student completing preparation work' },
+            ]}
+          />
           <div className="assessment-card">
             <div><span className="kicker">START WITH CLARITY</span><h2>Free assessment pathway</h2><p>The platform is designed to assess your needs where feasible, identify strengths and weak areas, and recommend a practical preparation route. Any practice estimate is clearly labelled as non-official.</p></div>
             <button className="primary-btn" onClick={() => openAuth('signup')}>Create my learning profile <ArrowRight size={18} /></button>
@@ -396,7 +434,7 @@ function App() {
         <section className="section feature-row" id="mock-tests">
           <div className="feature-visual feature-photo-visual">
             <img
-              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=85"
+              src="/resources/ielts/pexels-andy-barbour-6683580 .jpg"
               alt="Students working together at a table with laptops and study materials"
               loading="lazy"
             />
@@ -411,7 +449,7 @@ function App() {
         <section className="section student-story">
           <div className="student-story-photo">
             <img
-              src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1000&q=85"
+              src="/resources/ielts/pexels-ivan-s-5676737 .jpg"
               alt="Student studying online with a laptop and notes"
               loading="lazy"
             />
@@ -427,16 +465,47 @@ function App() {
             </div>
           </div>
         </section>
-        <section className="section" id="tutors"><div className="callout"><div><span className="kicker">TUTOR SUPPORT</span><h2>Human guidance where it matters.</h2><p>The platform foundation supports assigned tutors, writing and speaking feedback, homework, notes, sessions and student communication with role-based access.</p></div><button className="secondary-btn" onClick={() => openAuth('signup')}>Join as a learner <ArrowRight size={18} /></button></div></section>
+        <section className="section" id="tutors">
+          <PhotoStrip
+            items={[
+              { src: '/resources/ielts/pexels-faisal-qureshi-2wICPGTLHIg-unsplash .jpg', alt: 'Learners receiving guided academic support' },
+              { src: '/resources/ielts/pexels-william-fortunato-6140610 .jpg', alt: 'Students learning together' },
+            ]}
+          />
+          <div className="callout"><div><span className="kicker">TUTOR SUPPORT</span><h2>Human guidance where it matters.</h2><p>The platform foundation supports assigned tutors, writing and speaking feedback, homework, notes, sessions and student communication with role-based access.</p></div><button className="secondary-btn" onClick={() => openAuth('signup')}>Join as a learner <ArrowRight size={18} /></button></div></section>
         <section className="section" id="pricing">
           <div className="section-heading"><div><span className="kicker">FLEXIBLE ACCESS</span><h2>Plans can grow with your preparation.</h2></div><p>Payment and subscription architecture is designed for free entry points, courses, skills, mocks and tutor-supported services without locking the platform to one provider.</p></div>
+          <PhotoStrip
+            items={[
+              { src: '/resources/ielts/pexels-keira-burton-6146971 .jpg', alt: 'Student studying with a laptop' },
+              { src: '/resources/ielts/pexels-polina-tankilevitch-6929276 .jpg', alt: 'Academic preparation workspace' },
+              { src: '/resources/ielts/pexels-md-photography-2150970498-32668041 .jpg', alt: 'Learners collaborating during study' },
+            ]}
+          />
           <div className="price-grid">
             <article><span>FREE</span><h3>Start</h3><p>Explore the platform and begin building your learning profile.</p><button onClick={() => openAuth('signup')}>Create account <ArrowRight size={16} /></button></article>
             <article className="featured"><span>LEARNING</span><h3>Preparation</h3><p>Structured courses, practice and progress features as they are released.</p><button onClick={() => openAuth('signup')}>Start learning <ArrowRight size={16} /></button></article>
             <article><span>SUPPORT</span><h3>Tutor-guided</h3><p>Designed for deeper feedback and personalized support as tutor services launch.</p><button onClick={() => openAuth('signup')}>Register interest <ArrowRight size={16} /></button></article>
           </div>
         </section>
+        <section className="section" style={{ paddingTop: 0, paddingBottom: 70 }}>
+          <PhotoStrip
+            items={[
+              { src: '/resources/ielts/pexels-cottonbro-6890210 .jpg', alt: 'Study materials for IELTS preparation' },
+              { src: '/resources/ielts/pexels-this-and-no-internet-25-288559-29242204 .jpg', alt: 'Student using a laptop for study' },
+              { src: '/resources/ielts/pexels-proudlyswazi-33905986 .jpg', alt: 'Graduate celebrating an academic achievement' },
+            ]}
+          />
+        </section>
         <section className="resource-band" id="resources"><div><BookOpen size={28} /><div><strong>Resources for better preparation</strong><span>Guides, vocabulary, grammar, writing and speaking resources will live in one searchable library.</span></div></div><a href="#contact">Explore the platform <ArrowRight size={17} /></a></section>
+        <section className="section" style={{ paddingTop: 20 }}>
+          <PhotoStrip
+            items={[
+              { src: '/resources/ielts/pexels-speakmediauganda-35305047 .jpg', alt: 'International learners studying together' },
+              { src: '/resources/ielts/pexels-shutter-rwanda-2157056879-37898351 .jpg', alt: 'Students preparing for international opportunities' },
+            ]}
+          />
+        </section>
         <section className="section about" id="about"><div><span className="kicker">ABOUT IELTS KENYA CENTER</span><h2>A Kenyan-focused learning platform for global goals.</h2></div><div><p>IELTS Kenya Center is an IDP-authorized IELTS coaching and preparation provider for candidates, including job seekers pursuing international employment opportunities. We provide structured preparation, realistic practice and measurable progress support.</p><p>We provide coaching and preparation; IELTS testing, test administration and official results remain the responsibility of the official IELTS test services.</p></div></section>
       </main>}
       <footer id="contact"><div className="footer-main"><div className="brand footer-brand"><img className="brand-logo" src="/logo.svg" alt="IELTS Kenya Center" /></div><div><strong>Platform</strong><a href="#courses">Courses</a><a href="#practice">Practice</a><a href="#mock-tests">Mock Tests</a></div><div><strong>Support</strong><a href="#resources">Resources</a><a href="#contact">Contact</a><a href="#about">About Us</a></div><div><strong>Account</strong><button onClick={() => openAuth('signin')}>Student Login</button><button onClick={() => openAuth('signup')}>Create Account</button></div></div><div className="footer-bottom"><span>© 2026 IELTS Kenya Center. Prepare • Practice • Achieve.</span><span>Privacy • Terms • Cookies</span></div></footer>

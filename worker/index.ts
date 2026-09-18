@@ -4,6 +4,7 @@ interface Env {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
   SUPABASE_URL: string;
   SUPABASE_PUBLISHABLE_KEY: string;
+  SUPABASE_SECRET_KEY: string;
   RESEND_API_KEY: string;
   CLOUDFLARE_API_TOKEN?: string;
   OPS_SETUP_KEY?: string;
@@ -164,6 +165,111 @@ async function api(request: Request, env: Env): Promise<Response> {
     const { response, data } = await supabase(env, '/auth/v1/user', { method: 'PUT', body: JSON.stringify({ password: String(body.password) }) }, auth.token);
     if (!response.ok) return error((data as any)?.message || 'Unable to update your password.', response.status);
     return json({ ok: true, message: 'Password updated successfully.' });
+  }
+
+
+  const adminAuth = async (request: Request) => requireRoles(env, request, adminRoles);
+
+  const adminSupabase = async (path: string, init: RequestInit = {}) => {
+    const headers = new Headers(init.headers);
+    headers.set('apikey', env.SUPABASE_SECRET_KEY);
+    headers.set('Authorization', `Bearer ${env.SUPABASE_SECRET_KEY}`);
+    if (init.body) headers.set('Content-Type', 'application/json');
+    const response = await fetch(`${env.SUPABASE_URL}${path}`, { ...init, headers });
+    const text = await response.text();
+    let data: any = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+    return { response, data };
+  };
+
+  const adminCount = async (path: string) => {
+    const result = await adminSupabase(path, { headers: { Prefer: 'count=exact', Range: '0-0' } });
+    if (!result.response.ok) throw new Error(`Admin data query failed: ${result.response.status}`);
+    const range = result.response.headers.get('content-range') || '';
+    const total = range.includes('/') ? Number(range.split('/')[1]) : NaN;
+    return Number.isFinite(total) ? total : (Array.isArray(result.data) ? result.data.length : 0);
+  };
+
+  if (method === 'GET' && path === '/api/admin/overview') {
+    const auth = await adminAuth(request);
+    if (auth.response) return auth.response;
+    try {
+      const [students, activeEnrollments, publishedCourses, modules, lessons, completedLessons, progressRecords, roles, roleAssignments] = await Promise.all([
+        adminCount('/rest/v1/profiles?select=id'),
+        adminCount('/rest/v1/enrollments?status=eq.active&select=id'),
+        adminCount('/rest/v1/courses?is_published=eq.true&select=id'),
+        adminCount('/rest/v1/course_modules?select=id'),
+        adminCount('/rest/v1/lessons?select=id'),
+        adminCount('/rest/v1/lesson_progress?status=eq.completed&select=id'),
+        adminCount('/rest/v1/lesson_progress?select=id'),
+        adminCount('/rest/v1/roles?select=id'),
+        adminCount('/rest/v1/profile_roles?select=profile_id,role_id'),
+      ]);
+      const assignments = await adminSupabase('/rest/v1/profile_roles?select=profile_id,role_id,roles(name)');
+      const staffRoleNames = new Set(staffRoles);
+      const staffProfiles = new Set<string>();
+      if (assignments.response.ok && Array.isArray(assignments.data)) {
+        for (const row of assignments.data) if (staffRoleNames.has(row?.roles?.name)) staffProfiles.add(row.profile_id);
+      }
+      return json({ ok: true, counts: { students, activeEnrollments, publishedCourses, modules, lessons, completedLessons, progressRecords, staffAccounts: staffProfiles.size, roles, roleAssignments } });
+    } catch {
+      return error('Unable to load the admin overview.', 502);
+    }
+  }
+
+  if (method === 'GET' && path === '/api/admin/students') {
+    const auth = await adminAuth(request);
+    if (auth.response) return auth.response;
+    const search = (url.searchParams.get('search') || '').trim().replace(/[(),]/g, ' ');
+    const usersResult = await adminSupabase('/auth/v1/admin/users?page=1&per_page=1000');
+    if (!usersResult.response.ok) return error('Unable to load student accounts.', 502);
+    const users = Array.isArray(usersResult.data?.users) ? usersResult.data.users : [];
+    const profileQuery = '/rest/v1/profiles?select=id,full_name,created_at&order=created_at.desc';
+    const profilesResult = await adminSupabase(profileQuery);
+    if (!profilesResult.response.ok) return error('Unable to load student profiles.', 502);
+    const profiles = Array.isArray(profilesResult.data) ? profilesResult.data : [];
+    const rolesResult = await adminSupabase('/rest/v1/profile_roles?select=profile_id,roles(name)');
+    const roleMap = new Map<string,string[]>();
+    if (rolesResult.response.ok && Array.isArray(rolesResult.data)) {
+      for (const row of rolesResult.data) {
+        const name = row?.roles?.name;
+        if (name) roleMap.set(row.profile_id, [...(roleMap.get(row.profile_id) || []), name]);
+      }
+    }
+    const profileMap = new Map(profiles.map((p: any) => [p.id, p]));
+    let rows = users.map((u: any) => {
+      const p = profileMap.get(u.id) || {};
+      return { id: u.id, email: u.email || '', full_name: p.full_name || u.user_metadata?.full_name || '', created_at: p.created_at || u.created_at || null, roles: roleMap.get(u.id) || [] };
+    }).filter((u: any) => !u.roles.some((r: string) => staffRoles.includes(r)) && !u.roles.includes('admin') && !u.roles.includes('super_admin') && !u.roles.includes('platform_owner'));
+    if (search) {
+      const needle = search.toLowerCase();
+      rows = rows.filter((u: any) => String(u.email).toLowerCase().includes(needle) || String(u.full_name).toLowerCase().includes(needle));
+    }
+    return json({ ok: true, students: rows.slice(0, 100) });
+  }
+
+  const adminStudentMatch = path.match(/^\/api\/admin\/students\/([^/]+)$/);
+  if (method === 'GET' && adminStudentMatch) {
+    const auth = await adminAuth(request);
+    if (auth.response) return auth.response;
+    const studentId = decodeURIComponent(adminStudentMatch[1]);
+    const [userResult, profileResult, enrollmentsResult, progressResult] = await Promise.all([
+      adminSupabase(`/auth/v1/admin/users/${encodeURIComponent(studentId)}`),
+      adminSupabase(`/rest/v1/profiles?id=eq.${encodeURIComponent(studentId)}&select=id,full_name,created_at`),
+      adminSupabase(`/rest/v1/enrollments?student_id=eq.${encodeURIComponent(studentId)}&select=id,course_id,status,enrolled_at,completed_at,courses(id,title,slug)&order=enrolled_at.desc`),
+      adminSupabase(`/rest/v1/lesson_progress?student_id=eq.${encodeURIComponent(studentId)}&select=id,lesson_id,status,percent,last_position_seconds,completed_at,updated_at,lessons(id,title,module_id,course_modules(id,title,course_id,courses(id,title)))&order=updated_at.desc`),
+    ]);
+    if (!userResult.response.ok || !profileResult.response.ok || !enrollmentsResult.response.ok || !progressResult.response.ok) return error('Unable to load the student profile.', 502);
+    const user = userResult.data || {};
+    const profile = Array.isArray(profileResult.data) ? profileResult.data[0] || null : null;
+    const enrollments = Array.isArray(enrollmentsResult.data) ? enrollmentsResult.data : [];
+    const progress = Array.isArray(progressResult.data) ? progressResult.data : [];
+    return json({
+      ok: true,
+      student: { id: studentId, email: user.email || '', full_name: profile?.full_name || user.user_metadata?.full_name || '', created_at: profile?.created_at || user.created_at || null },
+      enrollments: enrollments.map((e: any) => ({ id:e.id,status:e.status,enrolled_at:e.enrolled_at,completed_at:e.completed_at,course:e.courses ? {id:e.courses.id,title:e.courses.title,slug:e.courses.slug} : null })),
+      progress: progress.map((p: any) => ({ id:p.id,lesson_id:p.lesson_id,status:p.status,percent:p.percent,completed_at:p.completed_at,updated_at:p.updated_at,lesson:p.lessons ? {id:p.lessons.id,title:p.lessons.title,module:p.lessons.course_modules ? {id:p.lessons.course_modules.id,title:p.lessons.course_modules.title,course:p.lessons.course_modules.courses ? {id:p.lessons.course_modules.courses.id,title:p.lessons.course_modules.courses.title} : null} : null} : null })),
+    });
   }
 
   if (method === 'GET' && path === '/api/admin/dashboard') {

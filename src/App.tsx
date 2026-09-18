@@ -307,16 +307,22 @@ function App() {
               official IELTS test centre or exam owner.
             </p>
           </div>
-          <div className="hero-panel">
-            <img className="hero-brand-logo" src="/logo.svg" alt="IELTS Kenya Center — Prepare, Practice, Achieve" />
-            <div className="panel-card">
+          <div className="hero-panel hero-photo-panel">
+            <img
+              className="hero-student-photo"
+              src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=85"
+              alt="University students studying together with books and laptops"
+              loading="eager"
+              fetchPriority="high"
+            />
+            <div className="photo-overlay" aria-hidden="true" />
+            <div className="panel-card photo-panel-card">
               <span className="status-dot" /> Your preparation, organized
               <br />
               <strong>One practical next step at a time.</strong>
             </div>
-            <div className="panel-card small">
-              <CheckCircle2 size={18} /> Four skills • Practice • Mocks •
-              Feedback
+            <div className="panel-card small photo-panel-badge">
+              <CheckCircle2 size={18} /> Four skills • Practice • Mocks • Feedback
             </div>
           </div>
         </section>
@@ -367,14 +373,16 @@ function App() {
           </div>
           <div className="skill-grid">
             {[
-              ['Listening','Train comprehension, note completion, matching and exam timing.'],
-              ['Reading','Build passage strategies, question-type accuracy and pacing.'],
-              ['Writing','Develop task response, coherence, vocabulary and grammar.'],
-              ['Speaking','Practice Parts 1–3 with timed prompts, recording and feedback.'],
-            ].map(([t, d], i) => (
-              <article className="skill-card" key={t}>
-                <div className="icon-box">{i === 0 ? '◉' : i === 1 ? '▤' : i === 2 ? '✎' : '◌'}</div>
-                <h3>{t}</h3><p>{d}</p><a href="#practice">Explore {t} <ArrowRight size={16} /></a>
+              ['Listening','Train comprehension, note completion, matching and exam timing.','https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=900&q=80','Student practising IELTS listening with focused study materials.'],
+              ['Reading','Build passage strategies, question-type accuracy and pacing.','https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=900&q=80','Student reading and preparing for an academic English assessment.'],
+              ['Writing','Develop task response, coherence, vocabulary and grammar.','https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80','Handwriting notes while preparing an academic writing task.'],
+              ['Speaking','Practice Parts 1–3 with timed prompts, recording and feedback.','https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=900&q=80','Student speaking during a guided academic session.'],
+            ].map(([t, d, image, alt]) => (
+              <article className="skill-card skill-photo-card" key={t}>
+                <img className="skill-photo" src={image} alt={alt} loading="lazy" />
+                <div className="skill-photo-body">
+                  <h3>{t}</h3><p>{d}</p><a href="#practice">Explore {t} <ArrowRight size={16} /></a>
+                </div>
               </article>
             ))}
           </div>
@@ -386,8 +394,38 @@ function App() {
           </div>
         </section>
         <section className="section feature-row" id="mock-tests">
-          <div className="feature-visual"><div className="mock-screen"><div className="mock-top"><span>MOCK EXAM</span><b>02:14:36</b></div><div className="mock-lines"><i /><i /><i /><i /><i /></div><div className="mock-progress"><span style={{ width: '68%' }} /></div></div></div>
+          <div className="feature-visual feature-photo-visual">
+            <img
+              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=85"
+              alt="Students working together at a table with laptops and study materials"
+              loading="lazy"
+            />
+            <div className="mock-screen mock-screen-overlay">
+              <div className="mock-top"><span>MOCK EXAM</span><b>02:14:36</b></div>
+              <div className="mock-lines"><i /><i /><i /><i /><i /></div>
+              <div className="mock-progress"><span style={{ width: '68%' }} /></div>
+            </div>
+          </div>
           <div><span className="kicker">MOCK TESTS</span><h2>Practice the pressure before exam day.</h2><p>Phase 1 establishes the foundation for timed Listening, Reading and Writing sequences, Speaking practice, autosave and performance review.</p><ul className="check-list"><li><ShieldCheck size={18} /> Autosave-ready architecture</li><li><ShieldCheck size={18} /> Skill and target-band aware</li><li><ShieldCheck size={18} /> Historical scoring configurations</li></ul></div>
+        </section>
+        <section className="section student-story">
+          <div className="student-story-photo">
+            <img
+              src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1000&q=85"
+              alt="Student studying online with a laptop and notes"
+              loading="lazy"
+            />
+          </div>
+          <div>
+            <span className="kicker">BUILT FOR REAL LEARNERS</span>
+            <h2>Study for IELTS alongside your academic and career goals.</h2>
+            <p>Use structured preparation whether you are balancing university, work, applications or plans to study and work internationally.</p>
+            <div className="story-points">
+              <span><strong>Flexible study</strong> Learn around your schedule.</span>
+              <span><strong>Focused practice</strong> Work on the skills that need attention.</span>
+              <span><strong>Clear progress</strong> Keep your target and next step visible.</span>
+            </div>
+          </div>
         </section>
         <section className="section" id="tutors"><div className="callout"><div><span className="kicker">TUTOR SUPPORT</span><h2>Human guidance where it matters.</h2><p>The platform foundation supports assigned tutors, writing and speaking feedback, homework, notes, sessions and student communication with role-based access.</p></div><button className="secondary-btn" onClick={() => openAuth('signup')}>Join as a learner <ArrowRight size={18} /></button></div></section>
         <section className="section" id="pricing">

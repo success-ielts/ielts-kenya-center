@@ -41,7 +41,7 @@ function Seo({ title, description, canonical, type='website', jsonLd }: { title:
     const url=canonical||window.location.href; let link=document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement|null;if(!link){link=document.createElement('link');link.rel='canonical';document.head.appendChild(link)}link.href=url;
     setProp('og:title',fullTitle);setProp('og:description',description);setProp('og:url',url);setProp('og:type',type);setProp('og:site_name','IELTS Kenya Center');
     setMeta('twitter:card','summary_large_image');setMeta('twitter:title',fullTitle);setMeta('twitter:description',description);
-    let ld=document.getElementById('seo-jsonld');if(!ld){ld=document.createElement('script');ld.id='seo-jsonld';ld.type='application/ld+json';document.head.appendChild(ld)}ld.textContent=JSON.stringify(jsonLd||{});
+    let ld=document.getElementById('seo-jsonld') as HTMLScriptElement|null;if(!ld){ld=document.createElement('script');ld.id='seo-jsonld';ld.type='application/ld+json';document.head.appendChild(ld)}ld.textContent=JSON.stringify(jsonLd||{});
   },[title,description,canonical,type,jsonLd]);
   return null;
 }

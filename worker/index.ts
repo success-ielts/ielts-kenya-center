@@ -194,8 +194,22 @@ async function api(request: Request, env: Env): Promise<Response> {
     const auth = await adminAuth(request);
     if (auth.response) return auth.response;
     try {
-      const [students, activeEnrollments, publishedCourses, modules, lessons, completedLessons, progressRecords, roles, roleAssignments] = await Promise.all([
-        adminCount('/rest/v1/profiles?select=id'),
+      const allProfilesResult = await adminSupabase('/rest/v1/profiles?select=id');
+      const profileRolesResult = await adminSupabase('/rest/v1/profile_roles?select=profile_id,roles(name)');
+      const nonStudentProfiles = new Set<string>();
+      if (profileRolesResult.response.ok && Array.isArray(profileRolesResult.data)) {
+        for (const row of profileRolesResult.data) {
+          const roleName = row?.roles?.name;
+          if (roleName && (staffRoles.includes(roleName) || ['admin','super_admin','platform_owner'].includes(roleName))) {
+            nonStudentProfiles.add(row.profile_id);
+          }
+        }
+      }
+      const students = allProfilesResult.response.ok && Array.isArray(allProfilesResult.data)
+        ? allProfilesResult.data.filter((profile: any) => !nonStudentProfiles.has(profile.id)).length
+        : 0;
+      const [activeEnrollments, publishedCourses, modules, lessons, completedLessons, progressRecords, roles, roleAssignments] = await Promise.all([
+        adminCount('/rest/v1/enrollments?status=eq.active&select=id'),
         adminCount('/rest/v1/enrollments?status=eq.active&select=id'),
         adminCount('/rest/v1/courses?is_published=eq.true&select=id'),
         adminCount('/rest/v1/course_modules?select=id'),

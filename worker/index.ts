@@ -965,9 +965,7 @@ export default {
     if (url.pathname === '/admin/dashboard') return protectedAppRoute(request, env, adminRoles);
     if (url.pathname === '/staff/dashboard') return protectedAppRoute(request, env, staffRoles);
     if (url.pathname === '/robots.txt' || url.pathname === '/sitemap.xml' || url.pathname === '/llms.txt') return api(request, env);
-    const publicPage = url.pathname.match(/^\/page\/([^/]+)$/);
-    if (publicPage) return publicSeoShell(request, env, decodeURIComponent(publicPage[1]));\n    if (publicCourse) return publicCourseSeoShell(request, env, decodeURIComponent(publicCourse[1]));
-    if (url.pathname.startsWith('/api/')) return api(request, env);
+    const publicPage = url.pathname.match(/^\\/page\\/([^/]+)$/);\n    if (publicPage) return publicSeoShell(request, env, decodeURIComponent(publicPage[1]));\n    const publicCourse = url.pathname.match(/^\\/course\\/([^/]+)$/);\n    if (publicCourse) return publicCourseSeoShell(request, env, decodeURIComponent(publicCourse[1]));\n    if (url.pathname.startsWith('/api/')) return api(request, env);
     return env.ASSETS.fetch(request);
   },
 };

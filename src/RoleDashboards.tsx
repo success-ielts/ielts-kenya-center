@@ -4,7 +4,6 @@ import { api } from './api';
 
 const shell: CSSProperties = { minHeight: '100vh', background: '#f7f5ef', color: '#18221f', padding: '24px 18px 48px' };
 const card: CSSProperties = { background: '#fff', border: '1px solid #e7e3d9', borderRadius: 18, padding: 22, boxShadow: '0 10px 30px rgba(24,34,31,.05)' };
-const button: CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, border: 0, borderRadius: 9, padding: '10px 14px', fontWeight: 750, cursor: 'pointer' };
 const muted: CSSProperties = { color: '#68706d' };
 
 function Nav({ kind, onSignOut }: { kind: 'admin'|'staff'; onSignOut: () => Promise<void> }) {

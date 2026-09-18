@@ -210,7 +210,6 @@ async function api(request: Request, env: Env): Promise<Response> {
         : 0;
       const [activeEnrollments, publishedCourses, modules, lessons, completedLessons, progressRecords, roles, roleAssignments] = await Promise.all([
         adminCount('/rest/v1/enrollments?status=eq.active&select=id'),
-        adminCount('/rest/v1/enrollments?status=eq.active&select=id'),
         adminCount('/rest/v1/courses?is_published=eq.true&select=id'),
         adminCount('/rest/v1/course_modules?select=id'),
         adminCount('/rest/v1/lessons?select=id'),

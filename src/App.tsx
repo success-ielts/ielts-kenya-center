@@ -397,6 +397,24 @@ function App() {
           </div>
         </section>
         <LearningIntelligence />
+        <section className="global-pathways section" id="pathways">
+          <div className="section-heading">
+            <div><span className="kicker">YOUR GOAL. YOUR PATH.</span><h2>One platform for the journey after IELTS, too.</h2></div>
+            <p>Start with preparation, then connect your learning to the academic, professional and international opportunities you are working toward.</p>
+          </div>
+          <div className="pathway-grid">
+            {[
+              ['01','Study abroad','Academic IELTS preparation, university-focused English and structured readiness.','/page/academic-ielts'],
+              ['02','International work','General Training preparation and practical communication for workplace goals.','/page/general-training-ielts'],
+              ['03','Migration','A structured four-skill preparation route with checkpoints and practice history.','/page/general-training-ielts'],
+              ['04','Personal growth','Build English ability beyond a single exam through continuous practice and feedback.','/page/ielts-preparation-kenya'],
+            ].map(([n,title,description,href]) => (
+              <a href={href} className="pathway-card" key={n}>
+                <span>{n}</span><h3>{title}</h3><p>{description}</p><strong>Explore pathway <ArrowRight size={16}/></strong>
+              </a>
+            ))}
+          </div>
+        </section>
         <section className="trust-strip">
           <div>
             <strong>Academic & General Training</strong>

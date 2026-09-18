@@ -41,7 +41,20 @@ function App() {
   useEffect(() => {
     api
       .get('/api/auth/me')
-      .then(({ data }) => setUser(data.user))
+      .then(({ data }) => {
+        setUser(data.user);
+        const roles: string[] = data.roles || [];
+        if (data.user) {
+          if (roles.includes('super_admin') || roles.includes('admin')) {
+            window.location.replace('/admin/dashboard');
+            return;
+          }
+          if (roles.some(role => ['academic_director', 'ielts_tutor', 'student_support', 'content_editor', 'marketing', 'exam_manager', 'finance', 'read_only_auditor'].includes(role))) {
+            window.location.replace('/staff/dashboard');
+            return;
+          }
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

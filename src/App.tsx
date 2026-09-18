@@ -81,7 +81,41 @@ function PublicPage({ pageKey }: { pageKey:string }) {
   if(!page)return <main className="learner-shell"><section style={{padding:40}}>Loading page…</section></main>;
   return <main className="learner-shell"><SeoGraph page={page} pageKey={pageKey}/><section className="learner-hero"><div><span className="kicker">IELTS KENYA CENTER</span><h1>{page.title}</h1><p>Published content from the IELTS Kenya Center learning platform.</p></div><a className="secondary-btn" href="/">Home</a></section><section className="learner-section"><ContentBlocks body={page.body}/></section></main>;
 }
-function CourseView({ courseId }: { courseId:string }) {
+
+type PublicCourse = { id:string; slug:string; title:string; description:string; level:string; ielts_type:string; modules:{id:string;title:string;description?:string|null;sort_order:number;lesson_count:number}[]; total_lessons:number };
+
+function PublicCoursePage({ slug }: { slug:string }) {
+  const [data,setData]=useState<PublicCourse|null>(null); const [error,setError]=useState('');
+  useEffect(()=>{api.get('/api/public/courses/'+encodeURIComponent(slug)).then(r=>setData(r.data.course)).catch((e:any)=>setError(e?.response?.data?.message||'Course not found.'));},[slug]);
+  if(error) return <main className="learner-shell"><section className="learner-hero"><div><span className="kicker">COURSE</span><h1>Course unavailable</h1><p>{error}</p><a className="secondary-btn" href="/page/ielts-courses">Explore IELTS courses</a></div></section></main>;
+  if(!data) return <main className="learner-shell"><section style={{padding:40}}>Loading course…</section></main>;
+  const type=String(data.ielts_type||'IELTS').replaceAll('_',' ');
+  const canonical=productionOrigin+'/course/'+encodeURIComponent(data.slug);
+  const outcomes = data.slug==='ielts-foundations'
+    ? ['Understand the IELTS test structure and core task types.','Build practical study habits across all four skills.','Develop a foundation for focused IELTS practice.']
+    : data.slug==='academic-band-7'
+    ? ['Strengthen Academic IELTS strategy across all four skills.','Use timed practice to improve accuracy and pacing.','Build a structured route toward Band 7-level preparation.']
+    : data.slug==='general-training-success'
+    ? ['Prepare for General Training Reading and Writing contexts.','Maintain balanced Listening and Speaking practice.','Develop a repeatable timed-practice and review routine.']
+    : ['Develop Speaking and Writing task structure.','Improve language development, organisation and review habits.','Use feedback routines to target recurring issues.'];
+  const graph={'@context':'https://schema.org','@graph':[
+    {'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin,logo:productionOrigin+'/favicon.svg'},
+    {'@type':'WebSite',name:'IELTS Kenya Center',url:productionOrigin},
+    {'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Home',item:productionOrigin+'/'},{'@type':'ListItem',position:2,name:'IELTS Courses',item:productionOrigin+'/page/ielts-courses'},{'@type':'ListItem',position:3,name:data.title,item:canonical}]},
+    {'@type':'Course',name:data.title,description:data.description,url:canonical,provider:{'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin},educationalLevel:data.level,courseCode:data.slug,about:type,hasCourseInstance:{'@type':'CourseInstance',courseMode:'online',url:canonical}}
+  ]};
+  return <main className="learner-shell">
+    <Seo title={data.title} description={data.description} canonical={canonical} jsonLd={graph}/>
+    <section className="learner-hero"><div><span className="kicker">{type.toUpperCase()} • {data.level}</span><h1>{data.title}</h1><p>{data.description}</p><div className="hero-actions"><button className="primary-btn" onClick={()=>{window.location.href='/#signup'}}>Start this course <ArrowRight size={18}/></button><a className="secondary-btn" href="/page/ielts-courses">All IELTS courses</a></div></div></section>
+    <section className="learner-stats"><article><strong>{data.modules.length}</strong><span>Modules</span></article><article><strong>{data.total_lessons}</strong><span>Lessons</span></article><article><strong>{type}</strong><span>IELTS pathway</span></article></section>
+    <section className="learner-section"><div className="section-heading"><div><span className="kicker">COURSE OVERVIEW</span><h2>What you will work through</h2></div><p>This public overview describes the curriculum structure. Individual lessons remain inside the learner area.</p></div>
+      <div className="journey-grid">{data.modules.map((m,i)=><article className="journey-card" key={m.id}><span>{String(i+1).padStart(2,'0')}</span><h3>{m.title}</h3><p>{m.description||'Structured IELTS preparation module.'}</p><small>{m.lesson_count} published lesson{m.lesson_count===1?'':'s'}</small></article>)}</div>
+    </section>
+    <section className="section"><div className="section-heading"><div><span className="kicker">LEARNING OUTCOMES</span><h2>Build practical IELTS preparation skills.</h2></div></div><ul className="check-list">{outcomes.map(o=><li key={o}><CheckCircle2 size={18}/>{o}</li>)}</ul></section>
+    <section className="assessment section"><div className="assessment-card"><div><span className="kicker">READY TO LEARN?</span><h2>Create your learner account.</h2><p>Sign in or create an account to access enrolled course lessons, practice content and progress tracking.</p></div><button className="primary-btn" onClick={()=>{window.location.href='/#signup'}}>Create account <ArrowRight size={18}/></button></div></section>
+  </main>;
+}
+\nfunction CourseView({ courseId }: { courseId:string }) {
   const [data,setData]=useState<any>(null); const [error,setError]=useState('');
   useEffect(()=>{api.get('/api/learning/courses/'+encodeURIComponent(courseId)).then(r=>setData(r.data)).catch((e:any)=>setError(e?.response?.data?.message||'Unable to load this course.'))},[courseId]);
   if(error)return <main className="learner-shell"><section className="learner-hero"><div><span className="kicker">COURSE</span><h1>Access unavailable</h1><p>{error}</p><a className="secondary-btn" href="/">Return to dashboard</a></div></section></main>;
@@ -178,7 +212,7 @@ function App() {
   const courseRoute=currentPath.match(/^\/learn\/course\/([^/]+)$/);
   const lessonRoute=currentPath.match(/^\/learn\/lesson\/([^/]+)$/);
   const pageRoute=currentPath.match(/^\/page\/([^/]+)$/);
-  if (!loading && pageRoute) return <PublicPage pageKey={decodeURIComponent(pageRoute[1])}/>;
+  if (!loading && pageRoute) return <PublicPage pageKey={decodeURIComponent(pageRoute[1])}/>;\n  if (!loading && publicCourseRoute) return <PublicCoursePage slug={decodeURIComponent(publicCourseRoute[1])}/>;
   if (!loading && lessonRoute && user) return <LessonView lessonId={decodeURIComponent(lessonRoute[1])}/>;
   if (!loading && courseRoute && user) return <CourseView courseId={decodeURIComponent(courseRoute[1])}/>;
 

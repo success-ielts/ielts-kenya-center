@@ -341,3 +341,23 @@ body { margin: 0; min-width: 320px; }
   .ai-path { grid-template-columns:1fr 1fr; gap:18px 8px; }
   .ai-path i { display:none; }
 }
+
+
+/* Home FAQ and contact */
+.faq-list { display:grid; gap:10px; max-width:980px; margin:0 auto; }
+.faq-list details { background:#fff; border:1px solid #dfe5e1; border-radius:14px; padding:0 18px; }
+.faq-list summary { list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:19px 2px; font-weight:800; }
+.faq-list summary::-webkit-details-marker { display:none; }
+.faq-list summary span { font-size:22px; font-weight:400; }
+.faq-list details[open] summary span { transform:rotate(45deg); }
+.faq-list details p { color:#626b68; font-size:13px; line-height:1.7; padding:0 34px 18px 2px; margin:0; }
+.home-contact { padding-top:10px; }
+.contact-card { background:#141816; color:#fff; border-radius:24px; padding:38px; display:flex; align-items:center; justify-content:space-between; gap:35px; }
+.contact-card h2 { max-width:700px; margin:7px 0 10px; }
+.contact-card p { max-width:700px; color:#c8cfcb; }
+.contact-actions { display:flex; flex-wrap:wrap; gap:10px; flex:0 0 auto; }
+.contact-actions .secondary-btn { color:#fff; border-color:#68716d; }
+@media (max-width:800px) {
+  .contact-card { display:block; padding:28px 22px; }
+  .contact-actions { margin-top:22px; }
+}

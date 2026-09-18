@@ -4,7 +4,6 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
-  Globe2,
   GraduationCap,
   Menu,
   ShieldCheck,

@@ -3,7 +3,6 @@ import { api } from './api';
 import {
   ArrowRight,
   BookOpen,
-  CheckCircle2,
   GraduationCap,
   Menu,
   Search,

@@ -122,13 +122,13 @@ body { margin: 0; min-width: 320px; }
 .resource-band a { color: #fff; text-decoration: none; font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 7px; }
 .about { display: grid; grid-template-columns: 1fr 1fr; gap: 8vw; }
 .about p { margin-top: 0; }
-.footer-main { background: #141618; color: #fff; padding: 65px 5vw; display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 40px; }
+.footer-main { background: #f3f5f2; color: #141618; border-top: 1px solid #e1e5e2; padding: 65px 5vw; display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 40px; }
 .footer-main > div { display: flex; flex-direction: column; gap: 10px; }
 .footer-main strong { font-size: 12px; }
-.footer-main a, .footer-main button { color: #9da4a5; background: none; border: 0; text-decoration: none; text-align: left; font: inherit; font-size: 12px; cursor: pointer; }
-.footer-main a:hover, .footer-main button:hover { color: #fff; }
+.footer-main a, .footer-main button { color: #59615f; background: none; border: 0; text-decoration: none; text-align: left; font: inherit; font-size: 12px; cursor: pointer; }
+.footer-main a:hover, .footer-main button:hover { color: #c90a0f; }
 .footer-brand { align-self: start; }
-.footer-bottom { background: #0d0f10; color: #777e7f; padding: 17px 5vw; display: flex; justify-content: space-between; font-size: 10px; }
+.footer-bottom { background: #e7ebe8; color: #5f6765; padding: 17px 5vw; display: flex; justify-content: space-between; font-size: 10px; }
 .mobile-nav { display: none; }
 .session-bar { position: fixed; right: 18px; bottom: 18px; background: #fff; border: 1px solid #dfe4e0; box-shadow: 0 15px 40px rgba(20, 22, 24, 0.15); padding: 10px 12px; border-radius: 10px; z-index: 30; font-size: 11px; }
 .session-bar button { margin-left: 10px; border: 0; background: none; font-weight: 800; cursor: pointer; }

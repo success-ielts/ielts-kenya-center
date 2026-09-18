@@ -209,6 +209,7 @@ function App() {
 
   const currentPath=window.location.pathname;
   const courseRoute=currentPath.match(/^\/learn\/course\/([^/]+)$/);
+  const publicCourseRoute=currentPath.match(/^\/course\/([^/]+)$/);
   const lessonRoute=currentPath.match(/^\/learn\/lesson\/([^/]+)$/);
   const pageRoute=currentPath.match(/^\/page\/([^/]+)$/);
   if (!loading && pageRoute) return <PublicPage pageKey={decodeURIComponent(pageRoute[1])}/>;\n  if (!loading && publicCourseRoute) return <PublicCoursePage slug={decodeURIComponent(publicCourseRoute[1])}/>;

@@ -272,6 +272,93 @@ async function api(request: Request, env: Env): Promise<Response> {
     });
   }
 
+
+  if (method === 'GET' && path === '/api/admin/courses') {
+    const auth = await adminAuth(request); if (auth.response) return auth.response;
+    const search = (url.searchParams.get('search') || '').trim().toLowerCase();
+    const result = await adminSupabase('/rest/v1/courses?select=id,slug,title,description,level,ielts_type,thumbnail_url,is_published,sort_order,created_at,updated_at&order=sort_order.asc,created_at.desc');
+    if (!result.response.ok) return error('Unable to load courses.', 502);
+    let courses = Array.isArray(result.data) ? result.data : [];
+    if (search) courses = courses.filter((c:any)=>[c.title,c.slug,c.level,c.ielts_type].some(v=>String(v||'').toLowerCase().includes(search)));
+    const modules = await adminSupabase('/rest/v1/course_modules?select=id,course_id');
+    const lessons = await adminSupabase('/rest/v1/lessons?select=id,module_id');
+    const moduleCount = new Map<string,number>(), lessonCount = new Map<string,number>(), moduleCourse = new Map<string,string>();
+    for (const m of (Array.isArray(modules.data)?modules.data:[])) { moduleCourse.set(m.id,m.course_id); moduleCount.set(m.course_id,(moduleCount.get(m.course_id)||0)+1); }
+    for (const l of (Array.isArray(lessons.data)?lessons.data:[])) { const cid=moduleCourse.get(l.module_id); if(cid) lessonCount.set(cid,(lessonCount.get(cid)||0)+1); }
+    return json({ok:true,courses:courses.map((c:any)=>({...c,module_count:moduleCount.get(c.id)||0,lesson_count:lessonCount.get(c.id)||0}))});
+  }
+
+  if (method === 'POST' && path === '/api/admin/courses') {
+    const auth = await adminAuth(request); if (auth.response) return auth.response;
+    const title=String(body.title||'').trim(), slug=String(body.slug||title).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    if(!title||!slug) return error('Course title and slug are required.',400);
+    const payload={slug,title,description:body.description?String(body.description).trim():null,level:body.level?String(body.level).trim():null,ielts_type:body.ieltsType?String(body.ieltsType).trim():null,thumbnail_url:body.thumbnailUrl?String(body.thumbnailUrl).trim():null,is_published:Boolean(body.isPublished),sort_order:Number.isFinite(Number(body.sortOrder))?Number(body.sortOrder):0};
+    const result=await adminSupabase('/rest/v1/courses',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});
+    if(!result.response.ok) return error(result.response.status===409?'A course with this slug already exists.':'Unable to create course.',result.response.status===409?409:502);
+    return json({ok:true,course:Array.isArray(result.data)?result.data[0]||null:null},{status:201});
+  }
+
+  const adminCourseMatch=path.match(/^\/api\/admin\/courses\/([^/]+)$/);
+  if(method==='PATCH'&&adminCourseMatch){
+    const auth=await adminAuth(request); if(auth.response) return auth.response;
+    const courseId=decodeURIComponent(adminCourseMatch[1]), payload:any={};
+    if(body.title!==undefined) payload.title=String(body.title).trim();
+    if(body.slug!==undefined) payload.slug=String(body.slug).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    if(body.description!==undefined) payload.description=body.description?String(body.description).trim():null;
+    if(body.level!==undefined) payload.level=body.level?String(body.level).trim():null;
+    if(body.ieltsType!==undefined) payload.ielts_type=body.ieltsType?String(body.ieltsType).trim():null;
+    if(body.thumbnailUrl!==undefined) payload.thumbnail_url=body.thumbnailUrl?String(body.thumbnailUrl).trim():null;
+    if(body.isPublished!==undefined) payload.is_published=Boolean(body.isPublished);
+    if(body.sortOrder!==undefined) payload.sort_order=Number(body.sortOrder)||0;
+    payload.updated_at=new Date().toISOString();
+    if(payload.title===''||payload.slug==='') return error('Course title and slug are required.',400);
+    const result=await adminSupabase(`/rest/v1/courses?id=eq.${encodeURIComponent(courseId)}`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});
+    if(!result.response.ok) return error(result.response.status===409?'A course with this slug already exists.':'Unable to update course.',result.response.status===409?409:502);
+    return json({ok:true,course:Array.isArray(result.data)?result.data[0]||null:null});
+  }
+
+  if(method==='GET'&&path==='/api/admin/enrollments'){
+    const auth=await adminAuth(request); if(auth.response) return auth.response;
+    const courseId=(url.searchParams.get('courseId')||'').trim(), status=(url.searchParams.get('status')||'').trim(), search=(url.searchParams.get('search')||'').trim().toLowerCase();
+    const filters=[courseId?`course_id=eq.${encodeURIComponent(courseId)}`:'',status?`status=eq.${encodeURIComponent(status)}`:''].filter(Boolean).join('&');
+    const enrollmentResult=await adminSupabase(`/rest/v1/enrollments?select=id,student_id,course_id,status,enrolled_at,completed_at,courses(id,title,slug)&order=enrolled_at.desc${filters?'&'+filters:''}`);
+    if(!enrollmentResult.response.ok) return error('Unable to load enrollments.',502);
+    const enrollments=Array.isArray(enrollmentResult.data)?enrollmentResult.data:[];
+    const [profilesResult,usersResult]=await Promise.all([adminSupabase('/rest/v1/profiles?select=id,full_name,created_at'),adminSupabase('/auth/v1/admin/users?page=1&per_page=1000')]);
+    if(!profilesResult.response.ok||!usersResult.response.ok) return error('Unable to load enrollment students.',502);
+    const profileMap=new Map((Array.isArray(profilesResult.data)?profilesResult.data:[]).map((p:any)=>[p.id,p]));
+    const userMap=new Map((Array.isArray(usersResult.data?.users)?usersResult.data.users:[]).map((u:any)=>[u.id,u]));
+    let rows=enrollments.map((e:any)=>{const p=profileMap.get(e.student_id)||{},u=userMap.get(e.student_id)||{};return{id:e.id,student_id:e.student_id,student:{id:e.student_id,email:u.email||'',full_name:p.full_name||u.user_metadata?.full_name||''},course:e.courses?{id:e.courses.id,title:e.courses.title,slug:e.courses.slug}:null,status:e.status,enrolled_at:e.enrolled_at,completed_at:e.completed_at};});
+    if(search) rows=rows.filter((r:any)=>String(r.student.email).toLowerCase().includes(search)||String(r.student.full_name).toLowerCase().includes(search)||String(r.course?.title||'').toLowerCase().includes(search));
+    return json({ok:true,enrollments:rows.slice(0,200)});
+  }
+
+  if(method==='POST'&&path==='/api/admin/enrollments'){
+    const auth=await adminAuth(request); if(auth.response) return auth.response;
+    const studentId=String(body.studentId||'').trim(),courseId=String(body.courseId||'').trim();
+    if(!studentId||!courseId) return error('Student and course are required.',400);
+    const course=await adminSupabase(`/rest/v1/courses?id=eq.${encodeURIComponent(courseId)}&select=id`);
+    if(!course.response.ok||!Array.isArray(course.data)||!course.data.length) return error('Course not found.',404);
+    const user=await adminSupabase(`/auth/v1/admin/users/${encodeURIComponent(studentId)}`);
+    if(!user.response.ok) return error('Student account not found.',404);
+    const existing=await adminSupabase(`/rest/v1/enrollments?student_id=eq.${encodeURIComponent(studentId)}&course_id=eq.${encodeURIComponent(courseId)}&select=id,status`);
+    if(!existing.response.ok) return error('Unable to check existing enrollment.',502);
+    if(Array.isArray(existing.data)&&existing.data.length) return error('This student is already enrolled in this course.',409);
+    const result=await adminSupabase('/rest/v1/enrollments',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({student_id:studentId,course_id:courseId,status:'active'})});
+    if(!result.response.ok) return error('Unable to create enrollment.',result.response.status);
+    return json({ok:true,enrollment:Array.isArray(result.data)?result.data[0]||null:null},{status:201});
+  }
+
+  const adminEnrollmentMatch=path.match(/^\/api\/admin\/enrollments\/([^/]+)$/);
+  if(method==='PATCH'&&adminEnrollmentMatch){
+    const auth=await adminAuth(request); if(auth.response) return auth.response;
+    const enrollmentId=decodeURIComponent(adminEnrollmentMatch[1]),status=String(body.status||'').trim();
+    if(!['active','completed','paused'].includes(status)) return error('Invalid enrollment status.',400);
+    const result=await adminSupabase(`/rest/v1/enrollments?id=eq.${encodeURIComponent(enrollmentId)}`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({status,completed_at:status==='completed'?new Date().toISOString():null})});
+    if(!result.response.ok) return error('Unable to update enrollment.',502);
+    return json({ok:true,enrollment:Array.isArray(result.data)?result.data[0]||null:null});
+  }
+
   if (method === 'GET' && path === '/api/admin/dashboard') {
     const auth = await requireRoles(env, request, adminRoles);
     if (auth.response) return auth.response;

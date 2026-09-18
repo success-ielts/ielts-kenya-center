@@ -967,6 +967,8 @@ export default {
     if (url.pathname === '/robots.txt' || url.pathname === '/sitemap.xml' || url.pathname === '/llms.txt') return api(request, env);
     const publicPage = url.pathname.match(/^\/page\/([^/]+)$/);
     if (publicPage) return publicSeoShell(request, env, decodeURIComponent(publicPage[1]));
+    const publicCourse = url.pathname.match(/^\/course\/([^/]+)$/);
+    if (publicCourse) return publicCourseSeoShell(request, env, decodeURIComponent(publicCourse[1]));
     if (url.pathname.startsWith('/api/')) return api(request, env);
     return env.ASSETS.fetch(request);
   },

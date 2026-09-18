@@ -194,7 +194,7 @@ async function api(request: Request, env: Env): Promise<Response> {
     const auth = await adminAuth(request);
     if (auth.response) return auth.response;
     try {
-      const [students, activeEnrollments, publishedCourses, modules, lessons, completedLessons, progressRecords, roles, roleAssignments] = await Promise.all([
+      const [profileCount, activeEnrollments, publishedCourses, modules, lessons, completedLessons, progressRecords, roles, roleAssignments] = await Promise.all([
         adminCount('/rest/v1/profiles?select=id'),
         adminCount('/rest/v1/enrollments?status=eq.active&select=id'),
         adminCount('/rest/v1/courses?is_published=eq.true&select=id'),
@@ -206,10 +206,15 @@ async function api(request: Request, env: Env): Promise<Response> {
         adminCount('/rest/v1/profile_roles?select=profile_id,role_id'),
       ]);
       const assignments = await adminSupabase('/rest/v1/profile_roles?select=profile_id,role_id,roles(name)');
-      const staffRoleNames = new Set(staffRoles);
+      const privilegedRoleNames = new Set([...staffRoles, 'admin', 'super_admin', 'platform_owner']);
+      const privilegedProfiles = new Set<string>();
+      if (assignments.response.ok && Array.isArray(assignments.data)) {
+        for (const row of assignments.data) if (privilegedRoleNames.has(row?.roles?.name)) privilegedProfiles.add(row.profile_id);
+      }
+      const students = Math.max(0, profileCount - privilegedProfiles.size);
       const staffProfiles = new Set<string>();
       if (assignments.response.ok && Array.isArray(assignments.data)) {
-        for (const row of assignments.data) if (staffRoleNames.has(row?.roles?.name)) staffProfiles.add(row.profile_id);
+        for (const row of assignments.data) if (staffRoles.includes(row?.roles?.name)) staffProfiles.add(row.profile_id);
       }
       return json({ ok: true, counts: { students, activeEnrollments, publishedCourses, modules, lessons, completedLessons, progressRecords, staffAccounts: staffProfiles.size, roles, roleAssignments } });
     } catch {
@@ -253,13 +258,16 @@ async function api(request: Request, env: Env): Promise<Response> {
     const auth = await adminAuth(request);
     if (auth.response) return auth.response;
     const studentId = decodeURIComponent(adminStudentMatch[1]);
-    const [userResult, profileResult, enrollmentsResult, progressResult] = await Promise.all([
+    const [userResult, profileResult, roleResult, enrollmentsResult, progressResult] = await Promise.all([
       adminSupabase(`/auth/v1/admin/users/${encodeURIComponent(studentId)}`),
       adminSupabase(`/rest/v1/profiles?id=eq.${encodeURIComponent(studentId)}&select=id,full_name,created_at`),
+      adminSupabase(`/rest/v1/profile_roles?profile_id=eq.${encodeURIComponent(studentId)}&select=roles(name)`),
       adminSupabase(`/rest/v1/enrollments?student_id=eq.${encodeURIComponent(studentId)}&select=id,course_id,status,enrolled_at,completed_at,courses(id,title,slug)&order=enrolled_at.desc`),
       adminSupabase(`/rest/v1/lesson_progress?student_id=eq.${encodeURIComponent(studentId)}&select=id,lesson_id,status,percent,last_position_seconds,completed_at,updated_at,lessons(id,title,module_id,course_modules(id,title,course_id,courses(id,title)))&order=updated_at.desc`),
     ]);
-    if (!userResult.response.ok || !profileResult.response.ok || !enrollmentsResult.response.ok || !progressResult.response.ok) return error('Unable to load the student profile.', 502);
+    if (!userResult.response.ok || !profileResult.response.ok || !roleResult.response.ok || !enrollmentsResult.response.ok || !progressResult.response.ok) return error('Unable to load the student profile.', 502);
+    const targetRoles = (Array.isArray(roleResult.data) ? roleResult.data : []).map((r:any)=>r?.roles?.name).filter(Boolean);
+    if (targetRoles.some((r:string)=>staffRoles.includes(r)||['admin','super_admin','platform_owner'].includes(r))) return error('Student profile not found.',404);
     const user = userResult.data || {};
     const profile = Array.isArray(profileResult.data) ? profileResult.data[0] || null : null;
     const enrollments = Array.isArray(enrollmentsResult.data) ? enrollmentsResult.data : [];
@@ -312,6 +320,9 @@ async function api(request: Request, env: Env): Promise<Response> {
     if(body.sortOrder!==undefined) payload.sort_order=Number(body.sortOrder)||0;
     payload.updated_at=new Date().toISOString();
     if(payload.title===''||payload.slug==='') return error('Course title and slug are required.',400);
+    const existingCourse=await adminSupabase(`/rest/v1/courses?id=eq.${encodeURIComponent(courseId)}&select=id`);
+    if(!existingCourse.response.ok) return error('Unable to verify course.',502);
+    if(!Array.isArray(existingCourse.data)||!existingCourse.data.length) return error('Course not found.',404);
     const result=await adminSupabase(`/rest/v1/courses?id=eq.${encodeURIComponent(courseId)}`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});
     if(!result.response.ok) return error(result.response.status===409?'A course with this slug already exists.':'Unable to update course.',result.response.status===409?409:502);
     return json({ok:true,course:Array.isArray(result.data)?result.data[0]||null:null});
@@ -358,6 +369,9 @@ async function api(request: Request, env: Env): Promise<Response> {
     const auth=await adminAuth(request); if(auth.response) return auth.response;
     const enrollmentId=decodeURIComponent(adminEnrollmentMatch[1]),status=String(body.status||'').trim();
     if(!['active','completed','paused'].includes(status)) return error('Invalid enrollment status.',400);
+    const existingEnrollment=await adminSupabase(`/rest/v1/enrollments?id=eq.${encodeURIComponent(enrollmentId)}&select=id`);
+    if(!existingEnrollment.response.ok) return error('Unable to verify enrollment.',502);
+    if(!Array.isArray(existingEnrollment.data)||!existingEnrollment.data.length) return error('Enrollment not found.',404);
     const result=await adminSupabase(`/rest/v1/enrollments?id=eq.${encodeURIComponent(enrollmentId)}`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({status,completed_at:status==='completed'?new Date().toISOString():null})});
     if(!result.response.ok) return error('Unable to update enrollment.',502);
     return json({ok:true,enrollment:Array.isArray(result.data)?result.data[0]||null:null});

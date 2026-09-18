@@ -266,5 +266,14 @@ async function api(request: Request, env: Env): Promise<Response> {
     }
   }
   return env.ASSETS.fetch(request);
+}
+
+export default {
+  async fetch(request: Request, env: Env) {
+    const url = new URL(request.url);
+    if (url.pathname === '/admin/dashboard') return protectedAppRoute(request, env, adminRoles);
+    if (url.pathname === '/staff/dashboard') return protectedAppRoute(request, env, staffRoles);
+    if (url.pathname.startsWith('/api/')) return api(request, env);
+    return env.ASSETS.fetch(request);
   },
 };

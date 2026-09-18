@@ -392,9 +392,9 @@ function App() {
           </div>
           <PhotoStrip
             items={[
-              { src: '/resources/ielts/pexels-polina-tankilevitch-6929187 .jpg', alt: 'Student preparing with study materials' },
-              { src: '/resources/ielts/pexels-thirdman-5649416 .jpg', alt: 'Learners working through an English study session' },
-              { src: '/resources/ielts/pexels-mikhail-nilov-9158715 .jpg', alt: 'Student focused on academic preparation' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-polina-tankilevitch-6929187 .jpg', alt: 'Student preparing with study materials' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-thirdman-5649416 .jpg', alt: 'Learners working through an English study session' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-mikhail-nilov-9158715 .jpg', alt: 'Student focused on academic preparation' },
             ]}
           />
         </section>
@@ -405,10 +405,10 @@ function App() {
           </div>
           <div className="skill-grid">
             {[
-              ['Listening','Train comprehension, note completion, matching and exam timing.','/resources/ielts/pexels-tosin-olowoleni-2148141635-34162710 .jpg','Student practising IELTS listening with focused study materials.'],
-              ['Reading','Build passage strategies, question-type accuracy and pacing.','/resources/ielts/markus-winkler-_bpu1M6OFy8-unsplash .jpg','Student reading and preparing for an academic English assessment.'],
-              ['Writing','Develop task response, coherence, vocabulary and grammar.','/resources/ielts/annie-spratt-fvaB1MK6NxM-unsplash .jpg','Handwriting notes while preparing an academic writing task.'],
-              ['Speaking','Practice Parts 1–3 with timed prompts, recording and feedback.','/resources/ielts/pexels-fajar-herlambang-studio-TmdrCRVDOnQ-unsplash .jpg','Student speaking during a guided academic session.'],
+              ['Listening','Train comprehension, note completion, matching and exam timing.','https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-tosin-olowoleni-2148141635-34162710 .jpg','Student practising IELTS listening with focused study materials.'],
+              ['Reading','Build passage strategies, question-type accuracy and pacing.','https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/markus-winkler-_bpu1M6OFy8-unsplash .jpg','Student reading and preparing for an academic English assessment.'],
+              ['Writing','Develop task response, coherence, vocabulary and grammar.','https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/annie-spratt-fvaB1MK6NxM-unsplash .jpg','Handwriting notes while preparing an academic writing task.'],
+              ['Speaking','Practice Parts 1–3 with timed prompts, recording and feedback.','https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-fajar-herlambang-studio-TmdrCRVDOnQ-unsplash .jpg','Student speaking during a guided academic session.'],
             ].map(([t, d, image, alt]) => (
               <article className="skill-card skill-photo-card" key={t}>
                 <img className="skill-photo" src={image} alt={alt} loading="lazy" />
@@ -422,8 +422,8 @@ function App() {
         <section className="assessment section" id="assessment">
           <PhotoStrip
             items={[
-              { src: '/resources/ielts/pexels-abdallah-mallya-489932967-16187414 .jpg', alt: 'IELTS learner in an academic study setting' },
-              { src: '/resources/ielts/pexels-gabby-k-6281959 .jpg', alt: 'Student completing preparation work' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-abdallah-mallya-489932967-16187414 .jpg', alt: 'IELTS learner in an academic study setting' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-gabby-k-6281959 .jpg', alt: 'Student completing preparation work' },
             ]}
           />
           <div className="assessment-card">
@@ -468,8 +468,8 @@ function App() {
         <section className="section" id="tutors">
           <PhotoStrip
             items={[
-              { src: '/resources/ielts/pexels-faisal-qureshi-2wICPGTLHIg-unsplash .jpg', alt: 'Learners receiving guided academic support' },
-              { src: '/resources/ielts/pexels-william-fortunato-6140610 .jpg', alt: 'Students learning together' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-faisal-qureshi-2wICPGTLHIg-unsplash .jpg', alt: 'Learners receiving guided academic support' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-william-fortunato-6140610 .jpg', alt: 'Students learning together' },
             ]}
           />
           <div className="callout"><div><span className="kicker">TUTOR SUPPORT</span><h2>Human guidance where it matters.</h2><p>The platform foundation supports assigned tutors, writing and speaking feedback, homework, notes, sessions and student communication with role-based access.</p></div><button className="secondary-btn" onClick={() => openAuth('signup')}>Join as a learner <ArrowRight size={18} /></button></div></section>
@@ -477,9 +477,9 @@ function App() {
           <div className="section-heading"><div><span className="kicker">FLEXIBLE ACCESS</span><h2>Plans can grow with your preparation.</h2></div><p>Payment and subscription architecture is designed for free entry points, courses, skills, mocks and tutor-supported services without locking the platform to one provider.</p></div>
           <PhotoStrip
             items={[
-              { src: '/resources/ielts/pexels-keira-burton-6146971 .jpg', alt: 'Student studying with a laptop' },
-              { src: '/resources/ielts/pexels-polina-tankilevitch-6929276 .jpg', alt: 'Academic preparation workspace' },
-              { src: '/resources/ielts/pexels-md-photography-2150970498-32668041 .jpg', alt: 'Learners collaborating during study' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-keira-burton-6146971 .jpg', alt: 'Student studying with a laptop' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-polina-tankilevitch-6929276 .jpg', alt: 'Academic preparation workspace' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-md-photography-2150970498-32668041 .jpg', alt: 'Learners collaborating during study' },
             ]}
           />
           <div className="price-grid">
@@ -491,9 +491,9 @@ function App() {
         <section className="section" style={{ paddingTop: 0, paddingBottom: 70 }}>
           <PhotoStrip
             items={[
-              { src: '/resources/ielts/pexels-cottonbro-6890210 .jpg', alt: 'Study materials for IELTS preparation' },
-              { src: '/resources/ielts/pexels-this-and-no-internet-25-288559-29242204 .jpg', alt: 'Student using a laptop for study' },
-              { src: '/resources/ielts/pexels-proudlyswazi-33905986 .jpg', alt: 'Graduate celebrating an academic achievement' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-cottonbro-6890210 .jpg', alt: 'Study materials for IELTS preparation' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-this-and-no-internet-25-288559-29242204 .jpg', alt: 'Student using a laptop for study' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-proudlyswazi-33905986 .jpg', alt: 'Graduate celebrating an academic achievement' },
             ]}
           />
         </section>
@@ -501,8 +501,8 @@ function App() {
         <section className="section" style={{ paddingTop: 20 }}>
           <PhotoStrip
             items={[
-              { src: '/resources/ielts/pexels-speakmediauganda-35305047 .jpg', alt: 'International learners studying together' },
-              { src: '/resources/ielts/pexels-shutter-rwanda-2157056879-37898351 .jpg', alt: 'Students preparing for international opportunities' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-speakmediauganda-35305047 .jpg', alt: 'International learners studying together' },
+              { src: 'https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-shutter-rwanda-2157056879-37898351 .jpg', alt: 'Students preparing for international opportunities' },
             ]}
           />
         </section>

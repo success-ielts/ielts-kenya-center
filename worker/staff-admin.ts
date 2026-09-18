@@ -153,6 +153,10 @@ export async function handleStaffAdmin(request: Request, env: StaffEnv, path: st
       const profileBefore = await adminSupabase(env, `/rest/v1/profiles?id=eq.${encodeURIComponent(targetId)}&select=full_name,phone_number,job_title,staff_active,employment_start_date,profile_photo_url`);
       const bp = Array.isArray(profileBefore.data)?profileBefore.data[0]||{}:{};
       before.staff_active = bp.staff_active;
+      if (body.staffActive === false && targetRoles.includes('platform_owner')) {
+        const owners = await adminSupabase(env, '/rest/v1/profile_roles?select=profile_id,roles!inner(name)&roles.name=eq.platform_owner');
+        if (owners.response.ok && Array.isArray(owners.data) && owners.data.length <= 1) return error('The last platform owner cannot be deactivated.',403);
+      }
       if (newRole) {
         const roleId=await getRoleId(env,newRole); if(!roleId)return error('Role not found.',400);
         await adminSupabase(env,`/rest/v1/profile_roles?profile_id=eq.${encodeURIComponent(targetId)}`,{method:'DELETE'});

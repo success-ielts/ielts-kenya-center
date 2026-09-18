@@ -122,16 +122,36 @@ async function api(request: Request, env: Env): Promise<Response> {
 
   if (method === 'POST' && path === '/api/auth/recover') {
     if (!body.email) return error('Email address is required.', 400);
-    const { response } = await supabase(env, `/auth/v1/recover?redirect_to=${encodeURIComponent(authRedirect('/reset-password'))}`, { method: 'POST', body: JSON.stringify({ email: String(body.email).trim() }) });
+    const email = String(body.email).trim();
+    const codeChallenge = typeof body.codeChallenge === 'string' ? body.codeChallenge.trim() : '';
+    const codeChallengeMethod = typeof body.codeChallengeMethod === 'string' ? body.codeChallengeMethod.trim() : '';
+    const recoveryBody: Record<string, string> = { email };
+    if (codeChallenge) {
+      if (codeChallenge.length < 43 || codeChallenge.length > 128) return error('Invalid recovery session.', 400);
+      if (codeChallengeMethod !== 'S256') return error('Invalid recovery session.', 400);
+      recoveryBody.code_challenge = codeChallenge;
+      recoveryBody.code_challenge_method = 'S256';
+    }
+    const { response } = await supabase(env, `/auth/v1/recover?redirect_to=${encodeURIComponent(authRedirect('/reset-password'))}`, { method: 'POST', body: JSON.stringify(recoveryBody) });
     if (!response.ok) return error('We could not send the password recovery email. Please check the address and try again.', response.status);
     return json({ ok: true, message: 'If an account exists for that email, a password recovery link has been sent.' });
   }
 
   if (method === 'POST' && path === '/api/auth/exchange') {
-    if (!body.accessToken) return error('Authentication callback is missing its session token.', 400);
-    const { response, data } = await supabase(env, '/auth/v1/user', {}, String(body.accessToken));
-    if (!response.ok) return error('This authentication link is invalid or has expired.', 401);
-    return withCookie(json({ ok: true, user: data }), String(body.accessToken));
+    if (body.accessToken) {
+      const { response, data } = await supabase(env, '/auth/v1/user', {}, String(body.accessToken));
+      if (!response.ok) return error('This authentication link is invalid or has expired.', 401);
+      return withCookie(json({ ok: true, user: data }), String(body.accessToken));
+    }
+    if (body.code && body.codeVerifier) {
+      const code = String(body.code);
+      const codeVerifier = String(body.codeVerifier);
+      if (codeVerifier.length < 43 || codeVerifier.length > 128) return error('Invalid recovery session.', 400);
+      const { response, data } = await supabase(env, '/auth/v1/token?grant_type=pkce', { method: 'POST', body: JSON.stringify({ auth_code: code, code_verifier: codeVerifier }) });
+      if (!response.ok || !(data as any)?.access_token) return error('This authentication link is invalid or has expired.', 401);
+      return withCookie(json({ ok: true, user: (data as any)?.user || null }), String((data as any).access_token));
+    }
+    return error('Authentication callback is missing its secure session.', 400);
   }
 
   if (method === 'POST' && path === '/api/auth/signout') return clearCookie();

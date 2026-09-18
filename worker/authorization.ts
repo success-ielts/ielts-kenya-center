@@ -70,6 +70,24 @@ export async function requireRoles(
     return { response: authJson({ message: 'You are not authorized to access this resource.', roles: [] }, 403), identity: null };
   }
 
+  if (roles.some(role => allowedRoles.includes(role))) {
+    const profileResponse = await fetch(
+      `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(data.id)}&select=staff_active`,
+      {
+        headers: {
+          apikey: env.SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    if (profileResponse.ok) {
+      const profiles = await profileResponse.json() as any[];
+      if (Array.isArray(profiles) && profiles[0]?.staff_active === false) {
+        return { response: authJson({ message: 'This staff account is inactive. Contact an administrator.', roles: [] }, 403), identity: null };
+      }
+    }
+  }
+
   return { response: null, identity: { user: data, roles, token } };
 }
 

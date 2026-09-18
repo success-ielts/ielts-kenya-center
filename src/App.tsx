@@ -96,13 +96,7 @@ function App() {
     <div className="site-shell">
       <header className="topbar">
         <a className="brand" href="#home" aria-label="IELTS Kenya Center home">
-          <span className="brand-mark">
-            <GraduationCap size={20} />
-          </span>
-          <span>
-            <strong>IELTS™</strong>
-            <small>KENYA CENTER</small>
-          </span>
+          <img className="brand-logo" src="/logo.svg" alt="IELTS Kenya Center" />
         </a>
         <nav className="desktop-nav" aria-label="Primary navigation">
           {sections.map(item => (
@@ -186,9 +180,7 @@ function App() {
             </p>
           </div>
           <div className="hero-panel">
-            <div className="hero-orbit">
-              <Globe2 size={80} strokeWidth={1.2} />
-            </div>
+            <img className="hero-brand-logo" src="/logo.svg" alt="IELTS Kenya Center — Prepare, Practice, Achieve" />
             <div className="panel-card">
               <span className="status-dot" /> Your preparation, organized
               <br />
@@ -281,7 +273,7 @@ function App() {
         <section className="resource-band" id="resources"><div><BookOpen size={28} /><div><strong>Resources for better preparation</strong><span>Guides, vocabulary, grammar, writing and speaking resources will live in one searchable library.</span></div></div><a href="#contact">Explore the platform <ArrowRight size={17} /></a></section>
         <section className="section about" id="about"><div><span className="kicker">ABOUT IELTS KENYA CENTER</span><h2>A Kenyan-focused learning platform for global goals.</h2></div><div><p>IELTS Kenya Center is being built as an education technology platform for learners who want structured IELTS preparation, realistic practice and measurable progress.</p><p>It is not presented as an official IELTS examination owner, test centre or authorized partner unless documentary authorization exists.</p></div></section>
       </main>}
-      <footer id="contact"><div className="footer-main"><div className="brand footer-brand"><span className="brand-mark"><GraduationCap size={20} /></span><span><strong>IELTS™</strong><small>KENYA CENTER</small></span></div><div><strong>Platform</strong><a href="#courses">Courses</a><a href="#practice">Practice</a><a href="#mock-tests">Mock Tests</a></div><div><strong>Support</strong><a href="#resources">Resources</a><a href="#contact">Contact</a><a href="#about">About Us</a></div><div><strong>Account</strong><button onClick={() => openAuth('signin')}>Student Login</button><button onClick={() => openAuth('signup')}>Create Account</button></div></div><div className="footer-bottom"><span>© 2026 IELTS Kenya Center. Prepare • Practice • Achieve.</span><span>Privacy • Terms • Cookies</span></div></footer>
+      <footer id="contact"><div className="footer-main"><div className="brand footer-brand"><img className="brand-logo" src="/logo.svg" alt="IELTS Kenya Center" /></div><div><strong>Platform</strong><a href="#courses">Courses</a><a href="#practice">Practice</a><a href="#mock-tests">Mock Tests</a></div><div><strong>Support</strong><a href="#resources">Resources</a><a href="#contact">Contact</a><a href="#about">About Us</a></div><div><strong>Account</strong><button onClick={() => openAuth('signin')}>Student Login</button><button onClick={() => openAuth('signup')}>Create Account</button></div></div><div className="footer-bottom"><span>© 2026 IELTS Kenya Center. Prepare • Practice • Achieve.</span><span>Privacy • Terms • Cookies</span></div></footer>
       {!loading && user && <div className="session-bar"><span>Signed in as <strong>{user.email}</strong></span><button onClick={signOut}>Sign out</button></div>}
       {authOpen && <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="auth-title"><div className="auth-modal"><button className="modal-close" aria-label="Close" onClick={() => setAuthOpen(false)}><X /></button><div className="auth-icon"><GraduationCap /></div><span className="kicker">IELTS KENYA CENTER</span><h2 id="auth-title">{authMode === 'signup' ? 'Create your learning account' : 'Welcome back'}</h2><p>{authMode === 'signup' ? 'Start your learner profile and preparation journey.' : 'Continue your preparation journey.'}</p><form onSubmit={submitAuth}>{authMode === 'signup' && <label>Full name<input name="fullName" autoComplete="name" required /></label>}<label>Email<input name="email" type="email" autoComplete="email" required /></label><label>Password<input name="password" type="password" minLength={8} autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'} required /></label>{message && <div className="form-message" role="alert">{message}</div>}<button className="primary-btn full" disabled={authBusy}>{authBusy ? 'Please wait…' : authMode === 'signup' ? 'Create account' : 'Sign in'} <ArrowRight size={18} /></button></form><button className="switch-auth" onClick={() => { setAuthMode(authMode === 'signup' ? 'signin' : 'signup'); setMessage(''); }}>{authMode === 'signup' ? 'Already have an account? Sign in' : 'New to the platform? Create an account'}</button></div></div>}
     </div>

@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   GraduationCap,
   Menu,
+  Search,
   ShieldCheck,
   Sparkles,
   Target,
@@ -107,6 +108,7 @@ function App() {
           <a href="#contact">Contact</a>
         </nav>
         <div className="nav-actions">
+          <button className="icon-btn" aria-label="Search"><Search size={19} /></button>
           <button className="text-btn" onClick={() => openAuth('signin')}>
             Student Login
           </button>
@@ -178,32 +180,33 @@ function App() {
               official IELTS test centre or exam owner.
             </p>
           </div>
-          <div className="hero-panel">
-            <img className="hero-brand-logo" src="/logo.svg" alt="IELTS Kenya Center — Prepare, Practice, Achieve" />
-            <div className="panel-card">
-              <span className="status-dot" /> Your preparation, organized
-              <br />
-              <strong>One practical next step at a time.</strong>
+          <div className="hero-visual" aria-label="IELTS Kenya Center learning journey">
+            <div className="visual-map" aria-hidden="true" />
+            <div className="visual-card skills-card">
+              <div className="visual-card-title"><span className="visual-icon green"><BookOpen size={17} /></span><span>Four skills<br /><strong>Real progress</strong></span></div>
+              <ul><li>Listening</li><li>Reading</li><li>Writing</li><li>Speaking</li></ul>
             </div>
-            <div className="panel-card small">
-              <CheckCircle2 size={18} /> Four skills • Practice • Mocks •
-              Feedback
+            <div className="visual-card goals-card">
+              <div className="visual-card-title"><span className="visual-icon red"><Target size={17} /></span><span>Your goals<br /><strong>Our support</strong></span></div>
+              <ul><li>Practice tests</li><li>Expert feedback</li><li>Personalized learning</li><li>Clear progress</li></ul>
             </div>
+            <div className="student-visual">
+              <div className="student-halo" />
+              <div className="student-head" />
+              <div className="student-hair" />
+              <div className="student-body"><span /></div>
+              <div className="student-book"><strong>Higher<br />Education<br />Brighter<br />Futures</strong></div>
+            </div>
+            <div className="global-note"><strong>From<br />Kenya<br />to the World</strong><span /></div>
+            <div className="global-card"><span className="visual-icon green">◎</span><div><strong>Global</strong><br />Opportunities<br /><b>Start Here</b></div></div>
+            <div className="kenya-ribbon ribbon-black" /><div className="kenya-ribbon ribbon-red" /><div className="kenya-ribbon ribbon-green" />
           </div>
         </section>
         <section className="trust-strip">
-          <div>
-            <strong>Academic & General Training</strong>
-            <span>Different goals, structured preparation</span>
-          </div>
-          <div>
-            <strong>Listening • Reading • Writing • Speaking</strong>
-            <span>Build balanced performance</span>
-          </div>
-          <div>
-            <strong>Practice-first learning</strong>
-            <span>Learn, apply, review, improve</span>
-          </div>
+          <div><span className="trust-icon red"><GraduationCap size={19} /></span><strong>10,000+</strong><small>Learners Worldwide</small></div>
+          <div><span className="trust-icon green"><Target size={19} /></span><strong>Proven Results</strong><small>Higher Band Scores</small></div>
+          <div><span className="trust-icon red"><Sparkles size={19} /></span><strong>Flexible Online Learning</strong><small>Learn Anytime, Anywhere</small></div>
+          <div><span className="trust-icon green"><ShieldCheck size={19} /></span><strong>Trusted & Secure</strong><small>Your Data is Safe</small></div>
         </section>
         <section className="section" id="preparation">
           <div className="section-heading">

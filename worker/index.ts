@@ -165,7 +165,20 @@ async function api(request: Request, env: Env): Promise<Response> {
   if (method === 'GET' && path === '/llms.txt') {
     const pages=await adminSupabase('/rest/v1/site_content?status=eq.published&select=content_key,title,body&order=title.asc');
     const lines=['# IELTS Kenya Center','> IELTS preparation, practice and learning resources for students in Kenya.','','IELTS Kenya Center provides structured IELTS learning content, preparation resources and learner-focused study tools.',''];
-    if(Array.isArray(pages.data)&&pages.data.length){lines.push('## Public pages');for(const p of pages.data){const d=seoText(p.body?.seo?.description||p.body?.description||'',220);lines.push('- ['+p.title+']('+productionOrigin+'/page/'+encodeURIComponent(p.content_key)+')'+(d?' — '+d:''));}}
+    const staticKeys=Object.entries(staticSeoBody).map(([key,content]:any)=>({key,title:staticSeo[key]?.[0]||key,description:staticSeo[key]?.[1]||content?.intro||''}));
+    const publishedKeys=new Set<string>();
+    if(Array.isArray(pages.data)&&pages.data.length){
+      lines.push('## Public pages');
+      for(const p of pages.data){
+        publishedKeys.add(String(p.content_key));
+        const d=seoText(p.body?.seo?.description||p.body?.description||'',220);
+        lines.push('- ['+p.title+']('+productionOrigin+'/page/'+encodeURIComponent(p.content_key)+')'+(d?' — '+d:''));
+      }
+    }
+    for(const p of staticKeys){
+      if(publishedKeys.has(p.key)) continue;
+      lines.push('- ['+p.title+']('+productionOrigin+'/page/'+encodeURIComponent(p.key)+')'+(p.description?' — '+seoText(p.description,220):''));
+    }
     const courses=await adminSupabase('/rest/v1/courses?is_published=eq.true&select=slug,title,description&order=title.asc');
     if(Array.isArray(courses.data)&&courses.data.length){lines.push('','## Published IELTS courses');for(const c of courses.data){lines.push('- ['+c.title+']('+productionOrigin+'/course/'+encodeURIComponent(c.slug)+') — '+seoText(c.description||'',220));}}
     lines.push('','## Primary website',productionOrigin+'/','');

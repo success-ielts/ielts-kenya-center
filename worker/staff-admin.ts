@@ -88,6 +88,8 @@ export async function handleStaffAdmin(request: Request, env: StaffEnv, path: st
     }
 
     const match = path.match(/^\/api\/admin\/staff\/([^/]+)$/);
+    const inviteMatch = path.match(/^\/api\/admin\/staff\/([^/]+)\/invite$/);
+    const avatarMatch = path.match(/^\/api\/admin\/staff\/([^/]+)\/avatar$/);
     if (method === 'GET' && match) {
       const targetId = decodeURIComponent(match[1]);
       const [u, p, rr, logs] = await Promise.all([
@@ -166,11 +168,6 @@ export async function handleStaffAdmin(request: Request, env: StaffEnv, path: st
       return json({ok:true});
     }
 
-    if (method === 'POST' && match && path.endsWith('/invite')) {
-      return error('Invalid invitation route.', 400);
-    }
-
-    const inviteMatch = path.match(/^\/api\/admin\/staff\/([^/]+)\/invite$/);
     if (method === 'POST' && inviteMatch) {
       const targetId=decodeURIComponent(inviteMatch[1]);
       const targetRoles=(await roleRows(env,targetId)).map((x:any)=>x?.roles?.name).filter(Boolean);
@@ -186,8 +183,8 @@ export async function handleStaffAdmin(request: Request, env: StaffEnv, path: st
       return json({ok:true});
     }
 
-    if (method === 'POST' && match && path.endsWith('/avatar')) {
-      const targetId=decodeURIComponent(match[1]);
+    if (method === 'POST' && avatarMatch) {
+      const targetId=decodeURIComponent(avatarMatch[1]);
       const targetRoles=(await roleRows(env,targetId)).map((x:any)=>x?.roles?.name).filter(Boolean);
       if(!targetRoles.length||!actorCanManage(identity.roles,targetRoles))return error('You cannot update this account.',403);
       const mime=String(body.mimeType||'');

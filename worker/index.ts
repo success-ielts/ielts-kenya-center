@@ -1,4 +1,5 @@
 import { identity, requireRoles } from './authorization';
+import { handleStaffAdmin } from './staff-admin';
 
 interface Env {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
@@ -56,7 +57,7 @@ async function isEnrolled(env: Env, studentId: string, courseId: string, token: 
   return { ok: result.response.ok, enrolled: Array.isArray(result.data) && result.data.length > 0 };
 }
 
-const adminRoles = ['super_admin', 'admin'];
+const adminRoles = ['platform_owner', 'super_admin', 'admin'];
 const staffRoles = ['academic_director', 'ielts_tutor', 'student_support', 'content_editor', 'marketing', 'exam_manager', 'finance', 'read_only_auditor'];
 
 function accessDeniedPage(status: number, message: string) {
@@ -181,6 +182,9 @@ async function api(request: Request, env: Env): Promise<Response> {
     try { data = text ? JSON.parse(text) : null; } catch { data = null; }
     return { response, data };
   };
+
+  const staffAdminResponse = await handleStaffAdmin(request, env, path, method, body);
+  if (staffAdminResponse) return staffAdminResponse;
 
   const adminCount = async (path: string) => {
     const result = await adminSupabase(path, { headers: { Prefer: 'count=exact', Range: '0-0' } });

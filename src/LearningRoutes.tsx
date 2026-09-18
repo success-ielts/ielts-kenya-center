@@ -15,13 +15,51 @@ export function AuthCallbackPage() {
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState(''); const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
-  const submit = async (event: FormEvent) => { event.preventDefault(); setBusy(true); setMessage(''); try { const { data } = await api.post('/api/auth/recover', { email }); setMessage(data.message); } catch (err: any) { setMessage(err?.response?.data?.message || 'We could not send the recovery email. Please try again.'); } finally { setBusy(false); } };
+  const submit = async (event: FormEvent) => {
+    event.preventDefault(); setBusy(true); setMessage('');
+    try {
+      const bytes = new Uint8Array(32); crypto.getRandomValues(bytes);
+      const codeVerifier = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+      const challengeBytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
+      const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(challengeBytes))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      sessionStorage.setItem('ikc_recovery_verifier', codeVerifier);
+      const { data } = await api.post('/api/auth/recover', { email, codeChallenge, codeChallengeMethod: 'S256' });
+      setMessage(data.message);
+    } catch (err: any) {
+      sessionStorage.removeItem('ikc_recovery_verifier');
+      setMessage(err?.response?.data?.message || 'We could not send the recovery email. Please try again.');
+    } finally { setBusy(false); }
+  };
   return <main style={shellStyle}><section style={{ ...cardStyle, maxWidth: 560 }}><a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 24 }}><ArrowLeft size={17}/> Back to IELTS Kenya Center</a><LockKeyhole size={34}/><h1>Forgot your password?</h1><p>Enter your account email and Supabase Auth will send a secure password recovery link.</p><form onSubmit={submit} style={{ display: 'grid', gap: 14 }}><label>Email address<input aria-label="Email address" required type="email" value={email} onChange={e => setEmail(e.target.value)} style={{ display: 'block', width: '100%', boxSizing: 'border-box', marginTop: 7, padding: 13, borderRadius: 9, border: '1px solid #d8d3c8' }}/></label><button disabled={busy} style={{ ...buttonStyle, justifyContent: 'center' }}>{busy ? 'Sending…' : 'Send recovery link'}</button></form>{message && <p role="status">{message}</p>}</section></main>;
 }
 
 export function ResetPasswordPage() {
   const [password, setPassword] = useState(''); const [confirm, setConfirm] = useState(''); const [busy, setBusy] = useState(true); const [ready, setReady] = useState(false); const [message, setMessage] = useState('Checking your recovery link…'); const [saved, setSaved] = useState(false);
-  useEffect(() => { (async () => { const hash = new URLSearchParams(window.location.hash.replace(/^#/, '')); const accessToken = hash.get('access_token'); const errorDescription = hash.get('error_description'); if (errorDescription) { setMessage(decodeURIComponent(errorDescription)); setBusy(false); return; } if (!accessToken) { setMessage('This recovery link is missing its secure session. It may have expired or already been used. Request a new one.'); setBusy(false); return; } try { await api.post('/api/auth/exchange', { accessToken }); window.history.replaceState({}, document.title, '/reset-password'); setReady(true); setMessage('Choose a new password.'); } catch { setMessage('This recovery link is invalid or has expired. Request a new password reset email.'); } finally { setBusy(false); } })(); }, []);
+  useEffect(() => { (async () => {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const params = new URLSearchParams(window.location.search);
+    const accessToken = hash.get('access_token');
+    const code = params.get('code');
+    const errorDescription = hash.get('error_description') || params.get('error_description');
+    if (errorDescription) { setMessage(decodeURIComponent(errorDescription)); setBusy(false); return; }
+    try {
+      if (accessToken) {
+        await api.post('/api/auth/exchange', { accessToken });
+      } else if (code) {
+        const codeVerifier = sessionStorage.getItem('ikc_recovery_verifier');
+        if (!codeVerifier) throw new Error('Missing recovery session.');
+        await api.post('/api/auth/exchange', { code, codeVerifier });
+        sessionStorage.removeItem('ikc_recovery_verifier');
+      } else {
+        throw new Error('Missing recovery session.');
+      }
+      window.history.replaceState({}, document.title, '/reset-password');
+      setReady(true); setMessage('Choose a new password.');
+    } catch {
+      sessionStorage.removeItem('ikc_recovery_verifier');
+      setMessage('This recovery link is invalid or has expired. Request a new password reset email.');
+    } finally { setBusy(false); }
+  })(); }, []);
   const submit = async (event: FormEvent) => { event.preventDefault(); setMessage(''); if (password.length < 8) { setMessage('Password must be at least 8 characters.'); return; } if (password !== confirm) { setMessage('Passwords do not match.'); return; } setBusy(true); try { await api.put('/api/auth/password', { password }); setSaved(true); setMessage('Password updated successfully.'); await api.post('/api/auth/signout'); } catch (err: any) { setMessage(err?.response?.data?.message || 'Unable to update your password. The recovery link may have expired.'); } finally { setBusy(false); } };
   return <main style={shellStyle}><section style={{ ...cardStyle, maxWidth: 560 }}><LockKeyhole size={34}/><h1>Set a new password</h1><p>{message}</p>{ready && !saved && <form onSubmit={submit} style={{ display: 'grid', gap: 14 }}><label>New password<input required minLength={8} type="password" value={password} onChange={e => setPassword(e.target.value)} style={{ display: 'block', width: '100%', boxSizing: 'border-box', marginTop: 7, padding: 13, borderRadius: 9, border: '1px solid #d8d3c8' }}/></label><label>Confirm new password<input required minLength={8} type="password" value={confirm} onChange={e => setConfirm(e.target.value)} style={{ display: 'block', width: '100%', boxSizing: 'border-box', marginTop: 7, padding: 13, borderRadius: 9, border: '1px solid #d8d3c8' }}/></label><button disabled={busy} style={{ ...buttonStyle, justifyContent: 'center' }}>{busy ? 'Saving…' : 'Update password'}</button></form>}{saved && <div><p role="status">Your password has been changed. Sign in with the new password.</p><a href="/" style={{ ...buttonStyle, textDecoration: 'none' }}>Return to sign in <ArrowRight size={17}/></a></div>}</section></main>;
 }

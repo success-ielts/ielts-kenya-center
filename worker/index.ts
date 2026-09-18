@@ -84,7 +84,14 @@ async function protectedAppRoute(request: Request, env: Env, allowedRoles: strin
 const seoText = (value: unknown, max=160) => String(value ?? '').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,max);
 const escapeHtml = (value: unknown) => String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
-async function publicSeoShell(request: Request, env: Env, pageKey: string) {
+
+  const courseSeo:any={
+    'ielts-foundations':['IELTS Foundations','Beginner IELTS course covering core skills, exam awareness and practical study habits for Academic and General Training preparation.'],
+    'academic-band-7':['Academic IELTS Band 7 Path','Intermediate Academic IELTS course covering Listening, Reading, Writing and Speaking, strategy and timed practice.'],
+    'general-training-success':['IELTS General Training Success','Intermediate General Training IELTS course covering practical Reading, Writing, Listening and Speaking preparation.'],
+    'speaking-writing-workshop':['Speaking & Writing Workshop','Focused IELTS Speaking and Writing course covering task structure, language development and feedback routines.']
+  };
+\nasync function publicSeoShell(request: Request, env: Env, pageKey: string) {
   const result = await adminSupabase('/rest/v1/site_content?content_key=eq.' + encodeURIComponent(pageKey) + '&status=eq.published&select=content_key,title,body&limit=1');
   const asset = await env.ASSETS.fetch(new Request(new URL('/index.html', request.url), {headers:request.headers}));
   const staticSeo:any={
@@ -113,7 +120,21 @@ async function publicSeoShell(request: Request, env: Env, pageKey: string) {
   return new Response(html,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'public, max-age=300'}});
 }
 
-async function api(request: Request, env: Env): Promise<Response> {
+
+async function publicCourseSeoShell(request: Request, env: Env, slug: string) {
+  const fallback=courseSeo[slug];
+  const result=await adminSupabase('/rest/v1/courses?slug=eq.'+encodeURIComponent(slug)+'&is_published=eq.true&select=id,slug,title,description,level,ielts_type&limit=1');
+  const asset=await env.ASSETS.fetch(new Request(new URL('/index.html',request.url),{headers:request.headers}));
+  const course=Array.isArray(result.data)&&result.data.length?result.data[0]:null;
+  if(!course&&!fallback) return new Response('Not found',{status:404,headers:{'Content-Type':'text/plain'}});
+  const title=seoText(course?.title||fallback[0]||'IELTS Course',70), description=seoText(course?.description||fallback[1],160), canonical=productionOrigin+'/course/'+encodeURIComponent(slug);
+  const graph={'@context':'https://schema.org','@graph':[{'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin,logo:productionOrigin+'/favicon.svg'},{'@type':'WebSite',name:'IELTS Kenya Center',url:productionOrigin},{'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Home',item:productionOrigin+'/'},{'@type':'ListItem',position:2,name:'IELTS Courses',item:productionOrigin+'/page/ielts-courses'},{'@type':'ListItem',position:3,name:course?.title||fallback[0],item:canonical}]},{'@type':'Course',name:course?.title||fallback[0],description,provider:{'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin},url:canonical,courseCode:slug,educationalLevel:course?.level,about:course?.ielts_type} ]};
+  let html=await asset.text();
+  const head='<title>'+escapeHtml(title)+'</title><meta name="description" content="'+escapeHtml(description)+'"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"><link rel="canonical" href="'+escapeHtml(canonical)+'"><meta property="og:title" content="'+escapeHtml(title)+'"><meta property="og:description" content="'+escapeHtml(description)+'"><meta property="og:url" content="'+escapeHtml(canonical)+'"><meta property="og:type" content="website"><meta property="og:site_name" content="IELTS Kenya Center"><script type="application/ld+json">'+JSON.stringify(graph).replace(/</g,'\\u003c')+'</script>';
+  html=html.replace(/<title>[^<]*<\/title>/i,'').replace('</head>',head+'</head>');
+  return new Response(html,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'public, max-age=300'}});
+}
+\nasync function api(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
   const method = request.method;
@@ -140,12 +161,34 @@ async function api(request: Request, env: Env): Promise<Response> {
     const seen=new Set<string>();
     if(Array.isArray(pages.data)) for(const p of pages.data){ const u=productionOrigin+'/page/'+encodeURIComponent(p.content_key); urls.push([u,p.updated_at||new Date().toISOString()]); seen.add(p.content_key); }
     for(const key of staticKeys) if(!seen.has(key)) urls.push([productionOrigin+'/page/'+encodeURIComponent(key),new Date().toISOString()]);
-    if(Array.isArray(courses.data)) for(const c of courses.data) urls.push([productionOrigin+'/learn/course/'+encodeURIComponent(c.id),c.updated_at||new Date().toISOString()]);
+    if(Array.isArray(courses.data)) for(const c of courses.data){ if(c.slug) urls.push([productionOrigin+'/course/'+encodeURIComponent(c.slug),c.updated_at||new Date().toISOString()]); }
     const xml='<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+urls.map(([loc,last])=>'<url><loc>'+escapeHtml(loc)+'</loc><lastmod>'+escapeHtml(last)+'</lastmod></url>').join('')+'</urlset>';
     return new Response(xml,{headers:{'Content-Type':'application/xml; charset=utf-8','Cache-Control':'public, max-age=3600'}});
   }
 
-  if (method === 'GET' && path === '/api/_healthcheck') return json({ ok: true, service: 'ielts-kenya-center', release: env.RELEASE_ID || 'unknown' }, { headers: { 'Cache-Control': 'no-store' } });
+
+  const publicCourseMatch=path.match(/^\\/api\\/public\\/courses\\/([^/]+)$/);
+  if(method==='GET'&&publicCourseMatch){
+    const slug=decodeURIComponent(publicCourseMatch[1]);
+    const courseResult=await adminSupabase('/rest/v1/courses?slug=eq.'+encodeURIComponent(slug)+'&is_published=eq.true&select=id,slug,title,description,level,ielts_type&limit=1');
+    if(!courseResult.response.ok) return error('Unable to load course.',502);
+    if(!Array.isArray(courseResult.data)||!courseResult.data.length) return error('Course not found.',404);
+    const course=courseResult.data[0];
+    const modulesResult=await adminSupabase('/rest/v1/course_modules?course_id=eq.'+encodeURIComponent(course.id)+'&select=id,title,description,sort_order&order=sort_order.asc');
+    if(!modulesResult.response.ok) return error('Unable to load course structure.',502);
+    const modules=Array.isArray(modulesResult.data)?modulesResult.data:[];
+    const lessonsResult=await adminSupabase('/rest/v1/lessons?is_published=eq.true&select=id,module_id&order=sort_order.asc');
+    if(!lessonsResult.response.ok) return error('Unable to load course lessons.',502);
+    const lessonCounts=new Map<string,number>();
+    for(const lesson of (Array.isArray(lessonsResult.data)?lessonsResult.data:[])) lessonCounts.set(lesson.module_id,(lessonCounts.get(lesson.module_id)||0)+1);
+    const visibleModules=modules.map((m:any)=>({...m,lesson_count:lessonCounts.get(m.id)||0}));
+    return json({ok:true,course:{...course,modules:visibleModules,total_lessons:visibleModules.reduce((n:number,m:any)=>n+m.lesson_count,0)}},{headers:{'Cache-Control':'public, max-age=300'}});
+  }
+
+  if (method === 'GET' && path === '/course/' ) return new Response('');\n
+  const publicCourseRoute=path.match(/^\\/course\\/([^/]+)$/);
+  if(method==='GET'&&publicCourseRoute) return publicCourseSeoShell(request,env,decodeURIComponent(publicCourseRoute[1]));
+\n  if (method === 'GET' && path === '/api/_healthcheck') return json({ ok: true, service: 'ielts-kenya-center', release: env.RELEASE_ID || 'unknown' }, { headers: { 'Cache-Control': 'no-store' } });
   if (method === 'GET' && path === '/api/config-status') return json({ supabaseConfigured: Boolean(env.SUPABASE_URL && env.SUPABASE_PUBLISHABLE_KEY) });
   if (method === 'POST' && path === '/api/email/status') return json({ configured: Boolean(env.RESEND_API_KEY), from: 'IELTS Kenya Center <admin@ielts-kenyacenter.or.ke>' });
 

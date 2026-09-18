@@ -155,7 +155,7 @@ async function publicCourseSeoShell(request: Request, env: Env, slug: string) {
 
   if (method === 'GET' && path === '/sitemap.xml') {
     const pages=await adminSupabase('/rest/v1/site_content?status=eq.published&select=content_key,updated_at&order=updated_at.desc');
-    const courses=await adminSupabase('/rest/v1/courses?is_published=eq.true&select=id,updated_at');
+    const courses=await adminSupabase('/rest/v1/courses?is_published=eq.true&select=id,slug,updated_at');
     const staticKeys=['ielts-preparation-kenya','academic-ielts','general-training-ielts','ielts-listening','ielts-reading','ielts-writing','ielts-speaking','ielts-practice','ielts-courses','ielts-resources'];
     const urls:[string,string][]=[[productionOrigin+'/',new Date().toISOString()]];
     const seen=new Set<string>();

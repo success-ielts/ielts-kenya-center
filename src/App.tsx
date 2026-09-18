@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { api } from '@appdeploy/client';
+import { api } from './api';
 import {
   ArrowRight,
   BookOpen,
@@ -38,17 +38,6 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [authBusy, setAuthBusy] = useState(false);
   const [message, setMessage] = useState('');
-  const [opsOpen, setOpsOpen] = useState(window.location.hash === '#ops');
-  const [opsKey, setOpsKey] = useState('');
-  const [opsBusy, setOpsBusy] = useState(false);
-  const [opsMessage, setOpsMessage] = useState('');
-  const [emailTestBusy, setEmailTestBusy] = useState(false);
-
-  useEffect(() => {
-    const onHashChange = () => setOpsOpen(window.location.hash === '#ops');
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
-  }, []);
 
   useEffect(() => {
     api
@@ -67,38 +56,6 @@ function App() {
     await api.post('/api/auth/signout');
     setUser(null);
   };
-  const configureCloudflare = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setOpsBusy(true);
-    setOpsMessage('');
-    try {
-      const { data } = await api.post('/api/cloudflare/setup', { setupKey: opsKey });
-      setOpsMessage(`DNS ${data.action}: ${data.hostname} → ${data.target}. DNS-only mode is enabled so AppDeploy domain verification can complete.`);
-      setOpsKey('');
-    } catch (err: any) {
-      setOpsMessage(err?.response?.data?.message || err?.message || 'Cloudflare DNS setup failed.');
-    } finally {
-      setOpsBusy(false);
-    }
-  };
-
-  const testResendEmail = async () => {
-    setEmailTestBusy(true);
-    setOpsMessage('');
-    try {
-      const recipient = window.prompt('Send the Resend test email to:', 'admin@ielts-kenyacenter.or.ke');
-      if (!recipient) return;
-      const setupKey = window.prompt('Enter the secure setup key:');
-      if (!setupKey) return;
-      const { data } = await api.post('/api/email/test', { setupKey, to: recipient });
-      setOpsMessage(data.message || 'Test email accepted by Resend.');
-    } catch (err: any) {
-      setOpsMessage(err?.response?.data?.message || err?.message || 'Resend test failed.');
-    } finally {
-      setEmailTestBusy(false);
-    }
-  };
-
   const submitAuth = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAuthBusy(true);

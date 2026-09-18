@@ -873,6 +873,9 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/admin/dashboard') return protectedAppRoute(request, env, adminRoles);
     if (url.pathname === '/staff/dashboard') return protectedAppRoute(request, env, staffRoles);
+    if (url.pathname === '/robots.txt' || url.pathname === '/sitemap.xml') return api(request, env);
+    const publicPage = url.pathname.match(/^\/page\/([^/]+)$/);
+    if (publicPage) return publicSeoShell(request, env, decodeURIComponent(publicPage[1]));
     if (url.pathname.startsWith('/api/')) return api(request, env);
     return env.ASSETS.fetch(request);
   },

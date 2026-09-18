@@ -341,6 +341,10 @@ async function api(request: Request, env: Env): Promise<Response> {
     if(!course.response.ok||!Array.isArray(course.data)||!course.data.length) return error('Course not found.',404);
     const user=await adminSupabase(`/auth/v1/admin/users/${encodeURIComponent(studentId)}`);
     if(!user.response.ok) return error('Student account not found.',404);
+    const roleCheck=await adminSupabase(`/rest/v1/profile_roles?profile_id=eq.${encodeURIComponent(studentId)}&select=roles(name)`);
+    if(!roleCheck.response.ok) return error('Unable to validate student role.',502);
+    const assignedRoles=(Array.isArray(roleCheck.data)?roleCheck.data:[]).map((r:any)=>r?.roles?.name).filter(Boolean);
+    if(assignedRoles.some((r:string)=>staffRoles.includes(r)||['admin','super_admin','platform_owner'].includes(r))) return error('Only learner accounts can be enrolled.',400);
     const existing=await adminSupabase(`/rest/v1/enrollments?student_id=eq.${encodeURIComponent(studentId)}&course_id=eq.${encodeURIComponent(courseId)}&select=id,status`);
     if(!existing.response.ok) return error('Unable to check existing enrollment.',502);
     if(Array.isArray(existing.data)&&existing.data.length) return error('This student is already enrolled in this course.',409);

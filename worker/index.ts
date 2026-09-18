@@ -190,7 +190,7 @@ async function api(request: Request, env: Env): Promise<Response> {
   }
 
 
-  const publicCourseMatch=path.match(/^\\/api\\/public\\/courses\\/([^/]+)$/);
+  const publicCourseMatch=path.match(/^\/api\/public\/courses\/([^/]+)$/);
   if(method==='GET'&&publicCourseMatch){
     const slug=decodeURIComponent(publicCourseMatch[1]);
     const courseResult=await adminSupabase('/rest/v1/courses?slug=eq.'+encodeURIComponent(slug)+'&is_published=eq.true&select=id,slug,title,description,level,ielts_type&limit=1');
@@ -209,7 +209,7 @@ async function api(request: Request, env: Env): Promise<Response> {
   }
 
 
-  const publicCourseRoute=path.match(/^\\/course\\/([^/]+)$/);
+  const publicCourseRoute=path.match(/^\/course\/([^/]+)$/);
   if(method==='GET'&&publicCourseRoute) return publicCourseSeoShell(request,env,decodeURIComponent(publicCourseRoute[1]));
   if (method === 'GET' && path === '/api/_healthcheck') return json({ ok: true, service: 'ielts-kenya-center', release: env.RELEASE_ID || 'unknown' }, { headers: { 'Cache-Control': 'no-store' } });
   if (method === 'GET' && path === '/api/config-status') return json({ supabaseConfigured: Boolean(env.SUPABASE_URL && env.SUPABASE_PUBLISHABLE_KEY) });

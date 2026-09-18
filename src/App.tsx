@@ -81,6 +81,41 @@ function PublicPage({ pageKey }: { pageKey:string }) {
   if(!page)return <main className="learner-shell"><section style={{padding:40}}>Loading page…</section></main>;
   return <main className="learner-shell"><SeoGraph page={page} pageKey={pageKey}/><section className="learner-hero"><div><span className="kicker">IELTS KENYA CENTER</span><h1>{page.title}</h1><p>Published content from the IELTS Kenya Center learning platform.</p></div><a className="secondary-btn" href="/">Home</a></section><section className="learner-section"><ContentBlocks body={page.body}/></section></main>;
 }
+
+type PublicCourse = { id:string; slug:string; title:string; description:string; level:string; ielts_type:string; modules:{id:string;title:string;description?:string|null;sort_order:number;lesson_count:number}[]; total_lessons:number };
+
+function PublicCoursePage({ slug }: { slug:string }) {
+  const [data,setData]=useState<PublicCourse|null>(null); const [error,setError]=useState('');
+  useEffect(()=>{api.get('/api/public/courses/'+encodeURIComponent(slug)).then(r=>setData(r.data.course)).catch((e:any)=>setError(e?.response?.data?.message||'Course not found.'));},[slug]);
+  if(error) return <main className="learner-shell"><section className="learner-hero"><div><span className="kicker">COURSE</span><h1>Course unavailable</h1><p>{error}</p><a className="secondary-btn" href="/page/ielts-courses">Explore IELTS courses</a></div></section></main>;
+  if(!data) return <main className="learner-shell"><section style={{padding:40}}>Loading course…</section></main>;
+  const type=String(data.ielts_type||'IELTS').replaceAll('_',' ');
+  const canonical=productionOrigin+'/course/'+encodeURIComponent(data.slug);
+  const outcomes = data.slug==='ielts-foundations'
+    ? ['Understand the IELTS test structure and core task types.','Build practical study habits across all four skills.','Develop a foundation for focused IELTS practice.']
+    : data.slug==='academic-band-7'
+    ? ['Strengthen Academic IELTS strategy across all four skills.','Use timed practice to improve accuracy and pacing.','Build a structured route toward Band 7-level preparation.']
+    : data.slug==='general-training-success'
+    ? ['Prepare for General Training Reading and Writing contexts.','Maintain balanced Listening and Speaking practice.','Develop a repeatable timed-practice and review routine.']
+    : ['Develop Speaking and Writing task structure.','Improve language development, organisation and review habits.','Use feedback routines to target recurring issues.'];
+  const graph={'@context':'https://schema.org','@graph':[
+    {'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin,logo:productionOrigin+'/favicon.svg'},
+    {'@type':'WebSite',name:'IELTS Kenya Center',url:productionOrigin},
+    {'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Home',item:productionOrigin+'/'},{'@type':'ListItem',position:2,name:'IELTS Courses',item:productionOrigin+'/page/ielts-courses'},{'@type':'ListItem',position:3,name:data.title,item:canonical}]},
+    {'@type':'Course',name:data.title,description:data.description,url:canonical,provider:{'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin},educationalLevel:data.level,courseCode:data.slug,about:type,hasCourseInstance:{'@type':'CourseInstance',courseMode:'online',url:canonical}}
+  ]};
+  return <main className="learner-shell">
+    <Seo title={data.title} description={data.description} canonical={canonical} jsonLd={graph}/>
+    <section className="learner-hero"><div><span className="kicker">{type.toUpperCase()} • {data.level}</span><h1>{data.title}</h1><p>{data.description}</p><div className="hero-actions"><button className="primary-btn" onClick={()=>{window.location.href='/?signup=1'}}>Start this course <ArrowRight size={18}/></button><a className="secondary-btn" href="/page/ielts-courses">All IELTS courses</a></div></div></section>
+    <section className="learner-stats"><article><strong>{data.modules.length}</strong><span>Modules</span></article><article><strong>{data.total_lessons}</strong><span>Lessons</span></article><article><strong>{type}</strong><span>IELTS pathway</span></article></section>
+    <section className="learner-section"><div className="section-heading"><div><span className="kicker">COURSE OVERVIEW</span><h2>What you will work through</h2></div><p>This public overview describes the curriculum structure. Individual lessons remain inside the learner area.</p></div>
+      <div className="journey-grid">{data.modules.map((m,i)=><article className="journey-card" key={m.id}><span>{String(i+1).padStart(2,'0')}</span><h3>{m.title}</h3><p>{m.description||'Structured IELTS preparation module.'}</p><small>{m.lesson_count} published lesson{m.lesson_count===1?'':'s'}</small></article>)}</div>
+    </section>
+    <section className="section"><div className="section-heading"><div><span className="kicker">LEARNING OUTCOMES</span><h2>Build practical IELTS preparation skills.</h2></div></div><ul className="check-list">{outcomes.map(o=><li key={o}><CheckCircle2 size={18}/>{o}</li>)}</ul></section>
+    <section className="assessment section"><div className="assessment-card"><div><span className="kicker">READY TO LEARN?</span><h2>Create your learner account.</h2><p>Sign in or create an account to access enrolled course lessons, practice content and progress tracking.</p></div><button className="primary-btn" onClick={()=>{window.location.href='/?signup=1'}}>Create account <ArrowRight size={18}/></button></div></section>
+  </main>;
+}
+
 function CourseView({ courseId }: { courseId:string }) {
   const [data,setData]=useState<any>(null); const [error,setError]=useState('');
   useEffect(()=>{api.get('/api/learning/courses/'+encodeURIComponent(courseId)).then(r=>setData(r.data)).catch((e:any)=>setError(e?.response?.data?.message||'Unable to load this course.'))},[courseId]);
@@ -109,7 +144,8 @@ function App() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    api
+    if (new URLSearchParams(window.location.search).get('signup') === '1') { setAuthMode('signup'); setAuthOpen(true); }
+   api
       .get('/api/auth/me')
       .then(({ data }) => {
         setUser(data.user);
@@ -176,9 +212,11 @@ function App() {
 
   const currentPath=window.location.pathname;
   const courseRoute=currentPath.match(/^\/learn\/course\/([^/]+)$/);
+  const publicCourseRoute=currentPath.match(/^\/course\/([^/]+)$/);
   const lessonRoute=currentPath.match(/^\/learn\/lesson\/([^/]+)$/);
   const pageRoute=currentPath.match(/^\/page\/([^/]+)$/);
   if (!loading && pageRoute) return <PublicPage pageKey={decodeURIComponent(pageRoute[1])}/>;
+  if (!loading && publicCourseRoute) return <PublicCoursePage slug={decodeURIComponent(publicCourseRoute[1])}/>;
   if (!loading && lessonRoute && user) return <LessonView lessonId={decodeURIComponent(lessonRoute[1])}/>;
   if (!loading && courseRoute && user) return <CourseView courseId={decodeURIComponent(courseRoute[1])}/>;
 
@@ -269,16 +307,22 @@ function App() {
               official IELTS test centre or exam owner.
             </p>
           </div>
-          <div className="hero-panel">
-            <img className="hero-brand-logo" src="/logo.svg" alt="IELTS Kenya Center — Prepare, Practice, Achieve" />
-            <div className="panel-card">
+          <div className="hero-panel hero-photo-panel">
+            <img
+              className="hero-student-photo"
+              src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=85"
+              alt="University students studying together with books and laptops"
+              loading="eager"
+              fetchPriority="high"
+            />
+            <div className="photo-overlay" aria-hidden="true" />
+            <div className="panel-card photo-panel-card">
               <span className="status-dot" /> Your preparation, organized
               <br />
               <strong>One practical next step at a time.</strong>
             </div>
-            <div className="panel-card small">
-              <CheckCircle2 size={18} /> Four skills • Practice • Mocks •
-              Feedback
+            <div className="panel-card small photo-panel-badge">
+              <CheckCircle2 size={18} /> Four skills • Practice • Mocks • Feedback
             </div>
           </div>
         </section>
@@ -329,14 +373,16 @@ function App() {
           </div>
           <div className="skill-grid">
             {[
-              ['Listening','Train comprehension, note completion, matching and exam timing.'],
-              ['Reading','Build passage strategies, question-type accuracy and pacing.'],
-              ['Writing','Develop task response, coherence, vocabulary and grammar.'],
-              ['Speaking','Practice Parts 1–3 with timed prompts, recording and feedback.'],
-            ].map(([t, d], i) => (
-              <article className="skill-card" key={t}>
-                <div className="icon-box">{i === 0 ? '◉' : i === 1 ? '▤' : i === 2 ? '✎' : '◌'}</div>
-                <h3>{t}</h3><p>{d}</p><a href="#practice">Explore {t} <ArrowRight size={16} /></a>
+              ['Listening','Train comprehension, note completion, matching and exam timing.','https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=900&q=80','Student practising IELTS listening with focused study materials.'],
+              ['Reading','Build passage strategies, question-type accuracy and pacing.','https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=900&q=80','Student reading and preparing for an academic English assessment.'],
+              ['Writing','Develop task response, coherence, vocabulary and grammar.','https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80','Handwriting notes while preparing an academic writing task.'],
+              ['Speaking','Practice Parts 1–3 with timed prompts, recording and feedback.','https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=900&q=80','Student speaking during a guided academic session.'],
+            ].map(([t, d, image, alt]) => (
+              <article className="skill-card skill-photo-card" key={t}>
+                <img className="skill-photo" src={image} alt={alt} loading="lazy" />
+                <div className="skill-photo-body">
+                  <h3>{t}</h3><p>{d}</p><a href="#practice">Explore {t} <ArrowRight size={16} /></a>
+                </div>
               </article>
             ))}
           </div>
@@ -348,8 +394,38 @@ function App() {
           </div>
         </section>
         <section className="section feature-row" id="mock-tests">
-          <div className="feature-visual"><div className="mock-screen"><div className="mock-top"><span>MOCK EXAM</span><b>02:14:36</b></div><div className="mock-lines"><i /><i /><i /><i /><i /></div><div className="mock-progress"><span style={{ width: '68%' }} /></div></div></div>
+          <div className="feature-visual feature-photo-visual">
+            <img
+              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=85"
+              alt="Students working together at a table with laptops and study materials"
+              loading="lazy"
+            />
+            <div className="mock-screen mock-screen-overlay">
+              <div className="mock-top"><span>MOCK EXAM</span><b>02:14:36</b></div>
+              <div className="mock-lines"><i /><i /><i /><i /><i /></div>
+              <div className="mock-progress"><span style={{ width: '68%' }} /></div>
+            </div>
+          </div>
           <div><span className="kicker">MOCK TESTS</span><h2>Practice the pressure before exam day.</h2><p>Phase 1 establishes the foundation for timed Listening, Reading and Writing sequences, Speaking practice, autosave and performance review.</p><ul className="check-list"><li><ShieldCheck size={18} /> Autosave-ready architecture</li><li><ShieldCheck size={18} /> Skill and target-band aware</li><li><ShieldCheck size={18} /> Historical scoring configurations</li></ul></div>
+        </section>
+        <section className="section student-story">
+          <div className="student-story-photo">
+            <img
+              src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1000&q=85"
+              alt="Student studying online with a laptop and notes"
+              loading="lazy"
+            />
+          </div>
+          <div>
+            <span className="kicker">BUILT FOR REAL LEARNERS</span>
+            <h2>Study for IELTS alongside your academic and career goals.</h2>
+            <p>Use structured preparation whether you are balancing university, work, applications or plans to study and work internationally.</p>
+            <div className="story-points">
+              <span><strong>Flexible study</strong> Learn around your schedule.</span>
+              <span><strong>Focused practice</strong> Work on the skills that need attention.</span>
+              <span><strong>Clear progress</strong> Keep your target and next step visible.</span>
+            </div>
+          </div>
         </section>
         <section className="section" id="tutors"><div className="callout"><div><span className="kicker">TUTOR SUPPORT</span><h2>Human guidance where it matters.</h2><p>The platform foundation supports assigned tutors, writing and speaking feedback, homework, notes, sessions and student communication with role-based access.</p></div><button className="secondary-btn" onClick={() => openAuth('signup')}>Join as a learner <ArrowRight size={18} /></button></div></section>
         <section className="section" id="pricing">
@@ -361,7 +437,7 @@ function App() {
           </div>
         </section>
         <section className="resource-band" id="resources"><div><BookOpen size={28} /><div><strong>Resources for better preparation</strong><span>Guides, vocabulary, grammar, writing and speaking resources will live in one searchable library.</span></div></div><a href="#contact">Explore the platform <ArrowRight size={17} /></a></section>
-        <section className="section about" id="about"><div><span className="kicker">ABOUT IELTS KENYA CENTER</span><h2>A Kenyan-focused learning platform for global goals.</h2></div><div><p>IELTS Kenya Center is being built as an education technology platform for learners who want structured IELTS preparation, realistic practice and measurable progress.</p><p>It is not presented as an official IELTS examination owner, test centre or authorized partner unless documentary authorization exists.</p></div></section>
+        <section className="section about" id="about"><div><span className="kicker">ABOUT IELTS KENYA CENTER</span><h2>A Kenyan-focused learning platform for global goals.</h2></div><div><p>IELTS Kenya Center is an IDP-authorized IELTS coaching and preparation provider for candidates, including job seekers pursuing international employment opportunities. We provide structured preparation, realistic practice and measurable progress support.</p><p>We provide coaching and preparation; IELTS testing, test administration and official results remain the responsibility of the official IELTS test services.</p></div></section>
       </main>}
       <footer id="contact"><div className="footer-main"><div className="brand footer-brand"><img className="brand-logo" src="/logo.svg" alt="IELTS Kenya Center" /></div><div><strong>Platform</strong><a href="#courses">Courses</a><a href="#practice">Practice</a><a href="#mock-tests">Mock Tests</a></div><div><strong>Support</strong><a href="#resources">Resources</a><a href="#contact">Contact</a><a href="#about">About Us</a></div><div><strong>Account</strong><button onClick={() => openAuth('signin')}>Student Login</button><button onClick={() => openAuth('signup')}>Create Account</button></div></div><div className="footer-bottom"><span>© 2026 IELTS Kenya Center. Prepare • Practice • Achieve.</span><span>Privacy • Terms • Cookies</span></div></footer>
       {!loading && user && <div className="session-bar"><span>Signed in as <strong>{user.email}</strong></span><button onClick={signOut}>Sign out</button></div>}

@@ -84,6 +84,27 @@ async function protectedAppRoute(request: Request, env: Env, allowedRoles: strin
 const seoText = (value: unknown, max=160) => String(value ?? '').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,max);
 const escapeHtml = (value: unknown) => String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
+
+const seoRelatedLinks=[['IELTS Preparation in Kenya','/page/ielts-preparation-kenya'],['Academic IELTS','/page/academic-ielts'],['General Training IELTS','/page/general-training-ielts'],['IELTS Listening','/page/ielts-listening'],['IELTS Reading','/page/ielts-reading'],['IELTS Writing','/page/ielts-writing'],['IELTS Speaking','/page/ielts-speaking'],['IELTS Practice','/page/ielts-practice'],['IELTS Courses','/page/ielts-courses'],['IELTS Resources','/page/ielts-resources']];
+const staticSeoBody:any={
+  'ielts-preparation-kenya':{intro:'IELTS Kenya Center provides structured online IELTS preparation for learners in Kenya. The platform helps candidates understand the test, build the four English skills, practise task types and track learning over time.',sections:[['What IELTS preparation should cover',['Listening: follow spoken English and identify key information.','Reading: locate information efficiently and manage time.','Writing: plan, develop ideas, organise paragraphs and review language.','Speaking: answer relevantly, speak with control and extend ideas naturally.']],['Build a practical study routine',['Start with a diagnostic view of your current skills.','Study one skill at a time while maintaining four-skill practice.','Add timed exercises as confidence improves.','Review mistakes and record recurring problems.']]]},
+  'academic-ielts':{intro:'Academic IELTS preparation combines understanding the test with repeated, purposeful practice. Cover all four skills while giving specific attention to Academic Reading and Writing.',sections:[['Academic Reading',['Identify main ideas and supporting detail.','Recognise paraphrase and locate evidence efficiently.','Review why answers are correct.','Build a timing plan.']],['Academic Writing',['Understand each task before writing.','Plan a clear position and relevant ideas.','Organise paragraphs logically.','Leave time to check grammar, vocabulary and spelling.']]]},
+  'general-training-ielts':{intro:'General Training IELTS preparation combines test knowledge with practical language practice. Listening and Speaking are shared with Academic IELTS, while Reading and Writing require preparation for General Training contexts.',sections:[['General Training Reading',['Practise everyday, workplace and general-interest texts.','Find specific information efficiently.','Build vocabulary from practical contexts.','Use timed sets to develop pacing.']],['General Training Writing',['Understand the purpose and tone of each task.','Organise letters and longer responses clearly.','Match language and formality to the task.','Check every part of the prompt is answered.']]]},
+  'ielts-listening':{intro:'IELTS Listening rewards careful attention, accurate reading of questions and the ability to follow spoken information while anticipating what may come next.',sections:[['Core Listening skills',['Predict the type of answer needed.','Recognise paraphrase.','Track speakers and topic changes.','Check spelling, numbers and details.','Stay focused after missing an answer.']],['Review your practice',['After a practice set, identify the exact reason for each mistake. Replay difficult sections after the first attempt and use the review to guide the next session.']]]},
+  'ielts-reading':{intro:'Strong IELTS Reading performance depends on language understanding and efficient test technique. Practice should teach you to locate evidence, interpret question wording and manage time.',sections:[['Skills to practise',['Skim for structure and main ideas.','Scan for locating signals.','Recognise paraphrases.','Read surrounding evidence before answering.','Keep moving when a question takes too long.']],['Review every mistake',['Classify mistakes as vocabulary, misunderstanding, locating evidence, question strategy or timing. This turns practice into a learning loop.']]]},
+  'ielts-writing':{intro:'IELTS Writing preparation requires understanding the task, selecting relevant ideas, organising them clearly and using accurate language.',sections:[['Before writing',['Read the task carefully.','Decide on a clear position or purpose.','Choose relevant ideas.','Plan paragraph order.','Keep the task reader and tone in mind.']],['Practise, review, rewrite',['A useful writing cycle is plan, write, review, identify recurring errors and rewrite. Keep an error log so study targets repeated problems.']]]},
+  'ielts-speaking':{intro:'Speaking practice should help you communicate ideas clearly and naturally under time pressure. The aim is flexible language, not memorised perfect answers.',sections:[['Build flexible answers',['Answer directly before adding detail.','Explain why you think or feel something.','Use relevant examples.','Extend answers with comparison or consequence.','Practise the same idea in more than one way.']],['Improve fluency',['Record short responses and listen for long pauses, repeated words and places where ideas stop. Repeat the task with a clearer structure.']]]},
+  'ielts-practice':{intro:'Practice is most useful when each attempt produces information. Review what went wrong, why it happened and what you will change next.',sections:[['Three stages of practice',['Untimed learning: understand the task and underlying skill.','Timed practice: add realistic time pressure.','Mock-style practice: complete a full component under realistic conditions and review it.']],['Keep an error log',['Record recurring problems by skill and question type. Use the log to direct future study instead of repeating only familiar tasks.']]]},
+  'ielts-courses':{intro:'IELTS Kenya Center uses structured courses to organise preparation into manageable learning steps. Published courses cover foundations, Academic preparation, General Training and focused Speaking and Writing practice.',sections:[['IELTS Foundations',['A beginner-friendly starting point focused on core skills, exam awareness and study habits.']],['Academic IELTS Band 7 Path',['An intermediate Academic IELTS course covering the four skills, strategy and timed practice.']],['IELTS General Training Success',['An intermediate General Training course focused on practical preparation for Reading, Writing and the wider IELTS experience.']],['Speaking & Writing Workshop',['A focused workshop for productive skills, task structure, language development and feedback routines.']]]},
+  'ielts-resources':{intro:'Useful preparation resources answer a specific question, explain the skill clearly and provide a practical way to apply what you learned. This hub brings together IELTS topics across the four skills.',sections:[['How to use the resources',['Choose one skill or problem at a time.','Read guidance before attempting practice.','Apply techniques under realistic conditions.','Review mistakes and record recurring problems.','Return to the relevant guide when the same issue appears again.']]]}
+};
+
+  const courseSeo:any={
+    'ielts-foundations':['IELTS Foundations','Beginner IELTS course covering core skills, exam awareness and practical study habits for Academic and General Training preparation.'],
+    'academic-band-7':['Academic IELTS Band 7 Path','Intermediate Academic IELTS course covering Listening, Reading, Writing and Speaking, strategy and timed practice.'],
+    'general-training-success':['IELTS General Training Success','Intermediate General Training IELTS course covering practical Reading, Writing, Listening and Speaking preparation.'],
+    'speaking-writing-workshop':['Speaking & Writing Workshop','Focused IELTS Speaking and Writing course covering task structure, language development and feedback routines.']
+  };
 async function publicSeoShell(request: Request, env: Env, pageKey: string) {
   const result = await adminSupabase('/rest/v1/site_content?content_key=eq.' + encodeURIComponent(pageKey) + '&status=eq.published&select=content_key,title,body&limit=1');
   const asset = await env.ASSETS.fetch(new Request(new URL('/index.html', request.url), {headers:request.headers}));
@@ -110,9 +131,30 @@ async function publicSeoShell(request: Request, env: Env, pageKey: string) {
   let html=await asset.text();
   const head='<title>'+escapeHtml(title)+'</title><meta name="description" content="'+escapeHtml(description)+'"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"><link rel="canonical" href="'+escapeHtml(canonical)+'"><meta property="og:title" content="'+escapeHtml(title)+'"><meta property="og:description" content="'+escapeHtml(description)+'"><meta property="og:url" content="'+escapeHtml(canonical)+'"><meta property="og:type" content="website"><meta property="og:site_name" content="IELTS Kenya Center"><script type="application/ld+json">'+JSON.stringify(graph).replace(/</g,'\\u003c')+'</script>';
   html=html.replace(/<title>[^<]*<\/title>/i,'').replace('</head>',head+'</head>');
+  if (!html.includes('<h1>')) { const content=staticSeoBody[pageKey]; const body=content ? '<main><article><h1>'+escapeHtml(dbPage?.title||fallback?.[0]||title)+'</h1><p>'+escapeHtml(content.intro)+'</p>'+content.sections.map((s:any)=>'<section><h2>'+escapeHtml(s[0])+'</h2><ul>'+s[1].map((x:string)=>'<li>'+escapeHtml(x)+'</li>').join('')+'</ul></section>').join('') : '<main><article><h1>'+escapeHtml(dbPage?.title||fallback?.[0]||title)+'</h1><p>'+escapeHtml(dbPage?.body?.description||fallback?.[1]||description)+'</p>'; const related='<section><h2>Related IELTS preparation</h2><ul>'+seoRelatedLinks.map((l:any)=>'<li><a href="'+l[1]+'">'+escapeHtml(l[0])+'</a></li>').join('')+'</ul></section></article></main>'; html=html.replace('<div id="root"></div>','<div id="root">'+body+related+'</div>'); }
   return new Response(html,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'public, max-age=300'}});
 }
 
+
+async function publicCourseSeoShell(request: Request, env: Env, slug: string) {
+  const fallback=courseSeo[slug];
+  const result=await adminSupabase('/rest/v1/courses?slug=eq.'+encodeURIComponent(slug)+'&is_published=eq.true&select=id,slug,title,description,level,ielts_type&limit=1');
+  const asset=await env.ASSETS.fetch(new Request(new URL('/index.html',request.url),{headers:request.headers}));
+  const course=Array.isArray(result.data)&&result.data.length?result.data[0]:null;
+  if(!course&&!fallback) return new Response('Not found',{status:404,headers:{'Content-Type':'text/plain'}});
+  const title=seoText(course?.title||fallback[0]||'IELTS Course',70), description=seoText(course?.description||fallback[1],160), canonical=productionOrigin+'/course/'+encodeURIComponent(slug);
+  const graph={'@context':'https://schema.org','@graph':[{'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin,logo:productionOrigin+'/favicon.svg'},{'@type':'WebSite',name:'IELTS Kenya Center',url:productionOrigin},{'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Home',item:productionOrigin+'/'},{'@type':'ListItem',position:2,name:'IELTS Courses',item:productionOrigin+'/page/ielts-courses'},{'@type':'ListItem',position:3,name:course?.title||fallback[0],item:canonical}]},{'@type':'Course',name:course?.title||fallback[0],description,provider:{'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin},url:canonical,courseCode:slug,educationalLevel:course?.level,about:course?.ielts_type} ]};
+  let html=await asset.text();
+  const head='<title>'+escapeHtml(title)+'</title><meta name="description" content="'+escapeHtml(description)+'"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"><link rel="canonical" href="'+escapeHtml(canonical)+'"><meta property="og:title" content="'+escapeHtml(title)+'"><meta property="og:description" content="'+escapeHtml(description)+'"><meta property="og:url" content="'+escapeHtml(canonical)+'"><meta property="og:type" content="website"><meta property="og:site_name" content="IELTS Kenya Center"><script type="application/ld+json">'+JSON.stringify(graph).replace(/</g,'\\u003c')+'</script>';
+  html=html.replace(/<title>[^<]*<\/title>/i,'').replace('</head>',head+'</head>');
+  if (course) {
+    const modulesResult=await adminSupabase('/rest/v1/course_modules?course_id=eq.'+encodeURIComponent(course.id)+'&select=id,title,description,sort_order&order=sort_order.asc');
+    const modules=Array.isArray(modulesResult.data)?modulesResult.data:[];
+    const body='<main><article><h1>'+escapeHtml(course.title)+'</h1><p>'+escapeHtml(course.description||description)+'</p><h2>Course overview</h2><p>Structured IELTS preparation organised into modules and published lessons.</p><ol>'+modules.map((m:any)=>'<li><strong>'+escapeHtml(m.title)+'</strong>'+(m.description?': '+escapeHtml(m.description):'')+'</li>').join('')+'</ol><p><a href="/page/ielts-courses">Explore all IELTS courses</a> · <a href="/?signup=1">Create a learner account</a></p></article></main>';
+    html=html.replace('<div id="root"></div>','<div id="root">'+body+'</div>');
+  }
+  return new Response(html,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'public, max-age=300'}});
+}
 async function api(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -124,6 +166,8 @@ async function api(request: Request, env: Env): Promise<Response> {
     const pages=await adminSupabase('/rest/v1/site_content?status=eq.published&select=content_key,title,body&order=title.asc');
     const lines=['# IELTS Kenya Center','> IELTS preparation, practice and learning resources for students in Kenya.','','IELTS Kenya Center provides structured IELTS learning content, preparation resources and learner-focused study tools.',''];
     if(Array.isArray(pages.data)&&pages.data.length){lines.push('## Public pages');for(const p of pages.data){const d=seoText(p.body?.seo?.description||p.body?.description||'',220);lines.push('- ['+p.title+']('+productionOrigin+'/page/'+encodeURIComponent(p.content_key)+')'+(d?' — '+d:''));}}
+    const courses=await adminSupabase('/rest/v1/courses?is_published=eq.true&select=slug,title,description&order=title.asc');
+    if(Array.isArray(courses.data)&&courses.data.length){lines.push('','## Published IELTS courses');for(const c of courses.data){lines.push('- ['+c.title+']('+productionOrigin+'/course/'+encodeURIComponent(c.slug)+') — '+seoText(c.description||'',220));}}
     lines.push('','## Primary website',productionOrigin+'/','');
     return new Response(lines.join('\n'),{headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'public, max-age=3600'}});
   }
@@ -134,17 +178,39 @@ async function api(request: Request, env: Env): Promise<Response> {
 
   if (method === 'GET' && path === '/sitemap.xml') {
     const pages=await adminSupabase('/rest/v1/site_content?status=eq.published&select=content_key,updated_at&order=updated_at.desc');
-    const courses=await adminSupabase('/rest/v1/courses?is_published=eq.true&select=id,updated_at');
+    const courses=await adminSupabase('/rest/v1/courses?is_published=eq.true&select=id,slug,updated_at');
     const staticKeys=['ielts-preparation-kenya','academic-ielts','general-training-ielts','ielts-listening','ielts-reading','ielts-writing','ielts-speaking','ielts-practice','ielts-courses','ielts-resources'];
     const urls:[string,string][]=[[productionOrigin+'/',new Date().toISOString()]];
     const seen=new Set<string>();
     if(Array.isArray(pages.data)) for(const p of pages.data){ const u=productionOrigin+'/page/'+encodeURIComponent(p.content_key); urls.push([u,p.updated_at||new Date().toISOString()]); seen.add(p.content_key); }
     for(const key of staticKeys) if(!seen.has(key)) urls.push([productionOrigin+'/page/'+encodeURIComponent(key),new Date().toISOString()]);
-    if(Array.isArray(courses.data)) for(const c of courses.data) urls.push([productionOrigin+'/learn/course/'+encodeURIComponent(c.id),c.updated_at||new Date().toISOString()]);
+    if(Array.isArray(courses.data)) for(const c of courses.data){ if(c.slug) urls.push([productionOrigin+'/course/'+encodeURIComponent(c.slug),c.updated_at||new Date().toISOString()]); }
     const xml='<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+urls.map(([loc,last])=>'<url><loc>'+escapeHtml(loc)+'</loc><lastmod>'+escapeHtml(last)+'</lastmod></url>').join('')+'</urlset>';
     return new Response(xml,{headers:{'Content-Type':'application/xml; charset=utf-8','Cache-Control':'public, max-age=3600'}});
   }
 
+
+  const publicCourseMatch=path.match(/^\/api\/public\/courses\/([^/]+)$/);
+  if(method==='GET'&&publicCourseMatch){
+    const slug=decodeURIComponent(publicCourseMatch[1]);
+    const courseResult=await adminSupabase('/rest/v1/courses?slug=eq.'+encodeURIComponent(slug)+'&is_published=eq.true&select=id,slug,title,description,level,ielts_type&limit=1');
+    if(!courseResult.response.ok) return error('Unable to load course.',502);
+    if(!Array.isArray(courseResult.data)||!courseResult.data.length) return error('Course not found.',404);
+    const course=courseResult.data[0];
+    const modulesResult=await adminSupabase('/rest/v1/course_modules?course_id=eq.'+encodeURIComponent(course.id)+'&select=id,title,description,sort_order&order=sort_order.asc');
+    if(!modulesResult.response.ok) return error('Unable to load course structure.',502);
+    const modules=Array.isArray(modulesResult.data)?modulesResult.data:[];
+    const lessonsResult=await adminSupabase('/rest/v1/lessons?is_published=eq.true&select=id,module_id&order=sort_order.asc');
+    if(!lessonsResult.response.ok) return error('Unable to load course lessons.',502);
+    const lessonCounts=new Map<string,number>();
+    for(const lesson of (Array.isArray(lessonsResult.data)?lessonsResult.data:[])) lessonCounts.set(lesson.module_id,(lessonCounts.get(lesson.module_id)||0)+1);
+    const visibleModules=modules.map((m:any)=>({...m,lesson_count:lessonCounts.get(m.id)||0}));
+    return json({ok:true,course:{...course,modules:visibleModules,total_lessons:visibleModules.reduce((n:number,m:any)=>n+m.lesson_count,0)}},{headers:{'Cache-Control':'public, max-age=300'}});
+  }
+
+
+  const publicCourseRoute=path.match(/^\/course\/([^/]+)$/);
+  if(method==='GET'&&publicCourseRoute) return publicCourseSeoShell(request,env,decodeURIComponent(publicCourseRoute[1]));
   if (method === 'GET' && path === '/api/_healthcheck') return json({ ok: true, service: 'ielts-kenya-center', release: env.RELEASE_ID || 'unknown' }, { headers: { 'Cache-Control': 'no-store' } });
   if (method === 'GET' && path === '/api/config-status') return json({ supabaseConfigured: Boolean(env.SUPABASE_URL && env.SUPABASE_PUBLISHABLE_KEY) });
   if (method === 'POST' && path === '/api/email/status') return json({ configured: Boolean(env.RESEND_API_KEY), from: 'IELTS Kenya Center <admin@ielts-kenyacenter.or.ke>' });

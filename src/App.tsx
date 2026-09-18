@@ -45,7 +45,7 @@ function App() {
         setUser(data.user);
         const roles: string[] = data.roles || [];
         if (data.user) {
-          if (roles.includes('super_admin') || roles.includes('admin')) {
+          if (roles.includes('super_admin') || roles.includes('admin') || roles.includes('platform_owner')) {
             window.location.replace('/admin/dashboard');
             return;
           }

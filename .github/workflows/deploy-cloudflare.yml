@@ -47,31 +47,6 @@ jobs:
         run: npx wrangler whoami
       - name: Build Cloudflare deployment output
         run: npm run build
-      - name: Prepare apex DNS for Worker Custom Domain
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          set -euo pipefail
-          DOMAIN_EXISTS=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/domains?hostname=ielts-kenyacenter.or.ke" | jq -r '.result[0].id // empty')
-          if [ -n "$DOMAIN_EXISTS" ]; then
-            echo "Worker Custom Domain already exists; leaving Cloudflare-managed DNS records untouched."
-            exit 0
-          fi
-          ZONE_ID=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/zones?name=ielts-kenyacenter.or.ke&status=active" | jq -r '.result[0].id // empty')
-          test -n "$ZONE_ID"
-          RECORDS=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records?name=ielts-kenyacenter.or.ke&per_page=100")
-          OLD_APPDEPLOY_ID=$(printf '%s' "$RECORDS" | jq -r '.result[] | select(.type == "A" and .content == "18.232.7.146") | .id' | head -n1)
-          if [ -n "$OLD_APPDEPLOY_ID" ]; then
-            curl -fsS -X DELETE -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records/$OLD_APPDEPLOY_ID" >/dev/null
-            echo "Removed only the old AppDeploy apex A record before attaching the Worker Custom Domain."
-          fi
-          REMAINING_CONFLICTS=$(printf '%s' "$RECORDS" | jq -r '.result[] | select((.type == "CNAME") or (.type == "AAAA") or (.type == "A" and .content != "18.232.7.146")) | [.type,.name,.content] | @tsv')
-          if [ -n "$REMAINING_CONFLICTS" ]; then
-            echo "Unexpected apex DNS records remain; refusing to alter them automatically:"
-            printf '%s\n' "$REMAINING_CONFLICTS"
-            exit 1
-          fi
       - name: Deploy Worker and static assets
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

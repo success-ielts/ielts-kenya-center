@@ -570,8 +570,39 @@ function App() {
             ]}
           />
         </section>
+        <section className="section" id="faq">
+          <div className="section-heading">
+            <div><span className="kicker">COMMON QUESTIONS</span><h2>Everything you need to get started.</h2></div>
+            <p>Clear answers before you create your learning profile.</p>
+          </div>
+          <div className="faq-list">
+            {[
+              ['Is IELTS Kenya Center the official IELTS test centre?', 'IELTS Kenya Center provides IELTS preparation and coaching. Official IELTS testing, administration and results remain with the relevant official IELTS test services.'],
+              ['Can I prepare for Academic and General Training IELTS?', 'Yes. The learning architecture supports both pathways, with shared Listening and Speaking preparation and pathway-specific Reading and Writing preparation.'],
+              ['Can the platform adapt to my target band?', 'The Home experience is designed around a target band and learner goal. As performance data accumulates, the platform can use those signals to shape future study recommendations.'],
+              ['Will my progress be saved?', 'The learner platform is connected to the learning backend for course enrolments and lesson progress.'],
+              ['Can I study with a tutor?', 'The platform architecture supports tutor assignment, feedback, homework, notes, sessions and learner communication as those services are activated.'],
+              ['How do I start?', 'Create your learner account, choose your pathway and begin with the available preparation and practice resources.'],
+            ].map(([question, answer]) => (
+              <details key={question}><summary>{question}<span>+</span></summary><p>{answer}</p></details>
+            ))}
+          </div>
+        </section>
         <section className="section about" id="about"><div><span className="kicker">ABOUT IELTS KENYA CENTER</span><h2>A Kenyan-focused learning platform for global goals.</h2></div><div><p>IELTS Kenya Center is an IDP-authorized IELTS coaching and preparation provider for candidates, including job seekers pursuing international employment opportunities. We provide structured preparation, realistic practice and measurable progress support.</p><p>We provide coaching and preparation; IELTS testing, test administration and official results remain the responsibility of the official IELTS test services.</p></div></section>
       </main>}
+        <section className="section home-contact" id="contact">
+          <div className="contact-card">
+            <div>
+              <span className="kicker">YOUR NEXT STEP</span>
+              <h2>Build your preparation around where you want to go.</h2>
+              <p>Start with a learner profile today. Your future pathway can connect goals, target band, practice, courses, progress and human support in one place.</p>
+            </div>
+            <div className="contact-actions">
+              <a className="primary-btn" href="/register">Create learner account <ArrowRight size={18} /></a>
+              <a className="secondary-btn" href="mailto:info@ielts-kenyacenter.or.ke">Contact IELTS Kenya Center</a>
+            </div>
+          </div>
+        </section>
       <footer id="contact"><div className="footer-main"><div className="brand footer-brand"><img className="brand-logo" src="/logo.svg" alt="IELTS Kenya Center" /></div><div><strong>Platform</strong><a href="/page/ielts-courses">Courses</a><a href="/page/ielts-practice">Practice</a><a href="#mock-tests">Mock Tests</a><a href="/page/ielts-preparation-kenya">Preparation</a></div><div><strong>Skills</strong><a href="/page/ielts-listening">Listening</a><a href="/page/ielts-reading">Reading</a><a href="/page/ielts-writing">Writing</a><a href="/page/ielts-speaking">Speaking</a></div><div><strong>Support</strong><a href="/page/ielts-resources">Resources</a><a href="#contact">Contact</a><a href="#about">About Us</a></div><div><strong>Account</strong><button onClick={() => openAuth('signin')}>Student Login</button><button onClick={() => openAuth('signup')}>Create Account</button></div></div><div className="footer-bottom"><span>© 2026 IELTS Kenya Center. Prepare • Practice • Achieve.</span><span>Privacy • Terms • Cookies</span></div></footer>
       {!loading && user && <div className="session-bar"><span>Signed in as <strong>{user.email}</strong></span><button onClick={signOut}>Sign out</button></div>}
       {authOpen && <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="auth-title"><div className="auth-modal"><button className="modal-close" aria-label="Close" onClick={() => setAuthOpen(false)}><X /></button><div className="auth-icon"><GraduationCap /></div><span className="kicker">IELTS KENYA CENTER</span><h2 id="auth-title">{authMode === 'signup' ? 'Create your learning account' : 'Welcome back'}</h2><p>{authMode === 'signup' ? 'Start your learner profile and preparation journey.' : 'Continue your preparation journey.'}</p><form onSubmit={submitAuth}>{authMode === 'signup' && <label>Full name<input name="fullName" autoComplete="name" required /></label>}<label>Email<input name="email" type="email" autoComplete="email" required /></label><label>Password<input name="password" type="password" minLength={8} autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'} required /></label>{message && <div className="form-message" role="alert">{message}</div>}<button className="primary-btn full" disabled={authBusy}>{authBusy ? 'Please wait…' : authMode === 'signup' ? 'Create account' : 'Sign in'} <ArrowRight size={18} /></button></form><button className="switch-auth" onClick={() => { setAuthMode(authMode === 'signup' ? 'signin' : 'signup'); setMessage(''); }}>{authMode === 'signup' ? 'Already have an account? Sign in' : 'New to the platform? Create an account'}</button></div></div>}

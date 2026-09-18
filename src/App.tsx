@@ -12,6 +12,8 @@ import {
   X,
 } from 'lucide-react';
 
+const productionOrigin = 'https://ielts-kenyacenter.or.ke';
+
 type User = {
   id?: string;
   email?: string;

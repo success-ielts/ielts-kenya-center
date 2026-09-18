@@ -36,6 +36,9 @@ function PageEditor({ page, onSave, onClose, busy }: { page:any; onSave:(payload
   const [title,setTitle]=useState(page?.title||'');
   const [contentKey,setContentKey]=useState(page?.content_key||'');
   const [status,setStatus]=useState(page?.status||'draft');
+  const [seoTitle,setSeoTitle]=useState(page?.body?.seo?.title||'');
+  const [seoDescription,setSeoDescription]=useState(page?.body?.seo?.description||'');
+  const [seoKeywords,setSeoKeywords]=useState(page?.body?.seo?.keywords||'');
   const [body,setBody]=useState(JSON.stringify(page?.body||{blocks:[{type:'heading',text:title||'New page'},{type:'paragraph',text:'Write your page content here.'}]},null,2));
   return <div className="ops-detail"><section style={card}>
     <button className="ops-close" aria-label="Close page editor" onClick={onClose}><X/></button>
@@ -45,9 +48,14 @@ function PageEditor({ page, onSave, onClose, busy }: { page:any; onSave:(payload
       <label>Page key / URL<input value={contentKey} onChange={e=>setContentKey(e.target.value)} placeholder="preparation" /></label>
       <label>Status<select value={status} onChange={e=>setStatus(e.target.value)}><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label>
     </div>
+    <div className="ops-form-grid" style={{marginTop:14}}>
+      <label>SEO title<input value={seoTitle} onChange={e=>setSeoTitle(e.target.value)} placeholder="IELTS Preparation in Kenya | IELTS Kenya Center" /></label>
+      <label>SEO keywords<input value={seoKeywords} onChange={e=>setSeoKeywords(e.target.value)} placeholder="IELTS Kenya, IELTS preparation, IELTS test" /></label>
+      <label style={{gridColumn:'1/-1'}}>Meta description<textarea value={seoDescription} onChange={e=>setSeoDescription(e.target.value)} rows={3} placeholder="Clear, useful description for search users." /></label>
+    </div>
     <label style={{display:'block',marginTop:14}}>Content JSON<textarea value={body} onChange={e=>setBody(e.target.value)} rows={18} style={{width:'100%',fontFamily:'monospace',fontSize:13}} /></label>
     <p style={{...muted,fontSize:12}}>Use blocks such as <code>{'{"type":"heading","text":"..."}'}</code>, <code>{'{"type":"paragraph","text":"..."}'}</code>, <code>{'{"type":"bullets","items":["..."]}'}</code> and <code>{'{"type":"callout","text":"..."}'}</code>.</p>
-    <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button className="secondary-btn compact" onClick={onClose}>Cancel</button><button className="primary-btn compact" disabled={busy} onClick={()=>onSave({title,contentKey,status,body})}>{busy?'Saving…':'Save page'}</button></div>
+    <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button className="secondary-btn compact" onClick={onClose}>Cancel</button><button className="primary-btn compact" disabled={busy} onClick={()=>onSave({title,contentKey,status,body,seo:{title:seoTitle,description:seoDescription,keywords:seoKeywords}})}>{busy?'Saving…':'Save page'}</button></div>
   </section></div>;
 }
 
@@ -137,7 +145,7 @@ function AdminDashboard({ identity }: { identity:any }) {
       </section></div>}
     </section>}
     {section==='pages'&&<section>
-      <div className="ops-student-toolbar"><div><h2>Pages</h2><p style={muted}>Create and publish public content pages without changing application code.</p></div><div style={{display:'flex',gap:8}}><div className="ops-search"><Search size={18}/><input aria-label="Search pages" value={pageSearch} onChange={e=>setPageSearch(e.target.value)} placeholder="Search pages"/></div><button className="primary-btn compact" onClick={()=>setPageForm({title:'',content_key:'',status:'draft',body:{blocks:[{type:'heading',text:'New page'},{type:'paragraph',text:'Write your content here.'}]}})}>New page</button></div></div>
+      <div className="ops-student-toolbar"><div><h2>Pages</h2><p style={muted}>Create and publish public content pages without changing application code.</p></div><div style={{display:'flex',gap:8}}><div className="ops-search"><Search size={18}/><input aria-label="Search pages" value={pageSearch} onChange={e=>setPageSearch(e.target.value)} placeholder="Search pages"/></div><button className="primary-btn compact" onClick={()=>setPageForm({title:'',content_key:'',status:'draft',body:{seo:{title:'',description:'',keywords:''},blocks:[{type:'heading',text:'New page'},{type:'paragraph',text:'Write your content here.'}]}})}>New page</button></div></div>
       <div className="ops-students">{pages.map(p=><div key={p.id} className="ops-student-row"><span><strong>{p.title||p.content_key}</strong><small>/page/{p.content_key} • {p.status}</small><small>Updated {p.updated_at?new Date(p.updated_at).toLocaleString():'—'}</small></span><button className="secondary-btn compact" onClick={()=>setPageForm(p)}>Edit</button></div>)}{!pages.length&&<div style={card}>No pages created yet.</div>}</div>
       {pageForm&&<PageEditor page={pageForm} onSave={savePage} onClose={()=>setPageForm(null)} busy={busy}/>}
     </section>}

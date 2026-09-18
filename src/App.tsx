@@ -12,6 +12,8 @@ import {
   X,
 } from 'lucide-react';
 
+const productionOrigin = 'https://ielts-kenyacenter.or.ke';
+
 type User = {
   id?: string;
   email?: string;
@@ -28,6 +30,29 @@ const sections = [
 ];
 
 function LearningDashboard({ user, onSignOut }: { user: User; onSignOut: () => Promise<void> }) { const [courses, setCourses] = useState<any[]>([]); const [enrollments, setEnrollments] = useState<any[]>([]); const [progress, setProgress] = useState<any[]>([]); const [busyCourse, setBusyCourse] = useState(''); const [message, setMessage] = useState(''); const load = async () => { const { data } = await api.get('/api/learning/dashboard'); setCourses(data.courses || []); setEnrollments(data.enrollments || []); setProgress(data.progress || []); }; useEffect(() => { load().catch(() => setMessage('We could not load your learning dashboard. Please try again.')); }, []); const enrolled = new Set(enrollments.map(item => item.course_id)); const enroll = async (courseId: string) => { setBusyCourse(courseId); setMessage(''); try { await api.post('/api/learning/enroll', { courseId }); await load(); setMessage('Course added to your learning plan.'); } catch (err: any) { setMessage(err?.response?.data?.message || err?.message || 'Unable to enroll right now.'); } finally { setBusyCourse(''); } }; const completion = progress.length ? Math.round(progress.reduce((sum, item) => sum + Number(item.percent || 0), 0) / progress.length) : 0; return <main className="learner-shell"><section className="learner-hero"><div><span className="kicker">STUDENT DASHBOARD</span><h1>Welcome back{user?.user_metadata?.full_name ? `, ${user.user_metadata.full_name}` : ''}.</h1><p>Your preparation is organized in one place. Choose a course, continue learning and build measurable progress toward your target.</p></div><div className="learner-actions"><span>{user?.email}</span><button className="secondary-btn" onClick={onSignOut}>Sign out</button></div></section><section className="learner-stats"><article><strong>{enrollments.length}</strong><span>Courses enrolled</span></article><article><strong>{progress.filter(item => item.status === 'completed').length}</strong><span>Lessons completed</span></article><article><strong>{completion}%</strong><span>Learning progress</span></article></section>{message && <div className="dashboard-message" role="status">{message}</div>}<section className="learner-section"><div className="section-heading"><div><span className="kicker">MY LEARNING</span><h2>Continue your preparation.</h2></div><p>Start with a structured course and build from foundations into skill-specific practice.</p></div><div className="course-grid">{courses.map(course => <article className="course-card" key={course.id}><span className="course-type">{String(course.ielts_type || '').replaceAll('_', ' ').toUpperCase()}</span><h3>{course.title}</h3><p>{course.description}</p><div className="course-meta"><span>{course.level}</span><span>Prepare • Practice</span></div>{enrolled.has(course.id) ? <button className="primary-btn full" onClick={() => window.location.assign('/learn/course/'+encodeURIComponent(course.id))}>Continue course <ArrowRight size={17} /></button> : <button className="secondary-btn full" disabled={busyCourse === course.id} onClick={() => enroll(course.id)}>{busyCourse === course.id ? 'Adding…' : 'Add to my learning plan'} <ArrowRight size={17} /></button>}</article>)}</div></section><section className="learner-section learner-next"><div><span className="kicker">NEXT BUILD</span><h2>Lessons, practice and progress tracking.</h2><p>The learning core is connected to Supabase. Course modules and individual lessons are the next layer of the learning experience.</p></div><div className="next-card"><Target size={22} /><strong>Keep your target visible.</strong><span>Use your profile to shape the study plan around IELTS type, target band and exam timeline.</span></div></section></main>; }
+
+function Seo({ title, description, canonical, type='website', jsonLd }: { title:string; description:string; canonical?:string; type?:string; jsonLd?:any }) {
+  useEffect(()=>{
+    const fullTitle=title.includes('IELTS Kenya Center')?title:`${title} | IELTS Kenya Center`;
+    document.title=fullTitle;
+    const setMeta=(name:string,content:string)=>{let el=document.head.querySelector(`meta[name="${name}"]`) as HTMLMetaElement|null;if(!el){el=document.createElement('meta');el.name=name;document.head.appendChild(el)}el.content=content};
+    const setProp=(property:string,content:string)=>{let el=document.head.querySelector(`meta[property="${property}"]`) as HTMLMetaElement|null;if(!el){el=document.createElement('meta');el.setAttribute('property',property);document.head.appendChild(el)}el.content=content};
+    setMeta('description',description); setMeta('robots','index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1');
+    const url=canonical||window.location.href; let link=document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement|null;if(!link){link=document.createElement('link');link.rel='canonical';document.head.appendChild(link)}link.href=url;
+    setProp('og:title',fullTitle);setProp('og:description',description);setProp('og:url',url);setProp('og:type',type);setProp('og:site_name','IELTS Kenya Center');
+    setMeta('twitter:card','summary_large_image');setMeta('twitter:title',fullTitle);setMeta('twitter:description',description);
+    let ld=document.getElementById('seo-jsonld') as HTMLScriptElement|null;if(!ld){ld=document.createElement('script');ld.id='seo-jsonld';ld.type='application/ld+json';document.head.appendChild(ld)}ld.textContent=JSON.stringify(jsonLd||{});
+  },[title,description,canonical,type,jsonLd]);
+  return null;
+}
+
+function SeoGraph({ page, pageKey }: { page:any; pageKey:string }) {
+  const seo=page?.body?.seo||{}; const description=String(seo.description||page?.body?.description||`IELTS preparation, practice and learning resources from IELTS Kenya Center for learners in Kenya and students preparing for international opportunities.`);
+  const canonical=`${productionOrigin}/page/${encodeURIComponent(pageKey)}`;
+  const graph:any[]=[{ '@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin,logo:`${productionOrigin}/favicon.svg`},{'@type':'WebSite',name:'IELTS Kenya Center',url:productionOrigin},{'@type':'WebPage',name:page.title,description,url:canonical}];
+  if(Array.isArray(seo.faqs)&&seo.faqs.length) graph.push({'@type':'FAQPage',mainEntity:seo.faqs.filter((f:any)=>f.question&&f.answer).map((f:any)=>({'@type':'Question',name:String(f.question),acceptedAnswer:{'@type':'Answer',text:String(f.answer)}}))});
+  return <Seo title={String(seo.title||page.title)} description={description.slice(0,160)} canonical={canonical} jsonLd={{'@context':'https://schema.org','@graph':graph}}/>;
+}
 
 function ContentBlocks({ body }: { body:any }) {
   const blocks=Array.isArray(body?.blocks)?body.blocks:[];
@@ -47,7 +72,7 @@ function PublicPage({ pageKey }: { pageKey:string }) {
   useEffect(()=>{api.get('/api/pages/'+encodeURIComponent(pageKey)).then(r=>setPage(r.data.page)).catch((e:any)=>setError(e?.response?.data?.message||'Page not found.'))},[pageKey]);
   if(error)return <main className="learner-shell"><section className="learner-hero"><div><span className="kicker">PAGE</span><h1>Page unavailable</h1><p>{error}</p><a className="secondary-btn" href="/">Return home</a></div></section></main>;
   if(!page)return <main className="learner-shell"><section style={{padding:40}}>Loading page…</section></main>;
-  return <main className="learner-shell"><section className="learner-hero"><div><span className="kicker">IELTS KENYA CENTER</span><h1>{page.title}</h1><p>Published content from the IELTS Kenya Center learning platform.</p></div><a className="secondary-btn" href="/">Home</a></section><section className="learner-section"><ContentBlocks body={page.body}/></section></main>;
+  return <main className="learner-shell"><SeoGraph page={page} pageKey={pageKey}/><section className="learner-hero"><div><span className="kicker">IELTS KENYA CENTER</span><h1>{page.title}</h1><p>Published content from the IELTS Kenya Center learning platform.</p></div><a className="secondary-btn" href="/">Home</a></section><section className="learner-section"><ContentBlocks body={page.body}/></section></main>;
 }
 
 function CourseView({ courseId }: { courseId:string }) {

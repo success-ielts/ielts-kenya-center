@@ -87,12 +87,26 @@ const escapeHtml = (value: unknown) => String(value ?? '').replace(/&/g,'&amp;')
 async function publicSeoShell(request: Request, env: Env, pageKey: string) {
   const result = await adminSupabase('/rest/v1/site_content?content_key=eq.' + encodeURIComponent(pageKey) + '&status=eq.published&select=content_key,title,body&limit=1');
   const asset = await env.ASSETS.fetch(new Request(new URL('/index.html', request.url), {headers:request.headers}));
-  if (!result.response.ok || !Array.isArray(result.data) || !result.data.length) return asset;
-  const page:any=result.data[0], seo=page.body?.seo||{};
-  const title=seoText(seo.title||page.title||'IELTS Kenya Center',70);
-  const description=seoText(seo.description||page.body?.description||'IELTS preparation, practice and learning resources from IELTS Kenya Center.',160);
+  const staticSeo:any={
+    'ielts-preparation-kenya':['IELTS Preparation in Kenya','Practical IELTS preparation in Kenya for Academic and General Training candidates, covering Listening, Reading, Writing and Speaking with structured study and practice.'],
+    'academic-ielts':['Academic IELTS Preparation','Academic IELTS preparation covering Listening, Reading, Writing and Speaking, with study guidance, practice routines and structured courses for learners in Kenya.'],
+    'general-training-ielts':['IELTS General Training Preparation','IELTS General Training preparation for learners in Kenya, with guidance for Reading, Writing, Listening and Speaking and a structured practice approach.'],
+    'ielts-listening':['IELTS Listening Preparation','Improve IELTS Listening through focused practice on key information, prediction, question types, concentration and timed test technique.'],
+    'ielts-reading':['IELTS Reading Preparation','Build IELTS Reading skills with strategies for skimming, scanning, locating evidence, understanding detail and managing test time.'],
+    'ielts-writing':['IELTS Writing Preparation','Prepare for IELTS Writing with guidance on planning, organisation, task response, coherence, vocabulary, grammar and timed practice.'],
+    'ielts-speaking':['IELTS Speaking Preparation','Practise IELTS Speaking with structured routines for answering questions, extending ideas, improving fluency and reviewing language accuracy.'],
+    'ielts-practice':['IELTS Practice and Mock Test Preparation','Build an IELTS practice routine with timed exercises, error review, four-skill practice and mock-test preparation.'],
+    'ielts-courses':['IELTS Courses','Explore structured IELTS courses for foundations, Academic Band 7 preparation, General Training and Speaking and Writing practice.'],
+    'ielts-resources':['IELTS Resources and Study Guides','Find IELTS study guides and preparation resources covering Listening, Reading, Writing, Speaking, practice routines and courses.']
+  };
+  const dbPage=Array.isArray(result.data)&&result.data.length?result.data[0]:null;
+  const seo=dbPage?.body?.seo||{};
+  const fallback=staticSeo[pageKey]||null;
+  if(!dbPage&&!fallback) return asset;
+  const title=seoText(seo.title||dbPage?.title||fallback?.[0]||'IELTS Kenya Center',70);
+  const description=seoText(seo.description||dbPage?.body?.description||fallback?.[1]||'IELTS preparation, practice and learning resources from IELTS Kenya Center.',160);
   const canonical=productionOrigin+'/page/'+encodeURIComponent(pageKey);
-  const graph={'@context':'https://schema.org','@graph':[{'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin,logo:productionOrigin+'/favicon.svg'},{'@type':'WebSite',name:'IELTS Kenya Center',url:productionOrigin},{'@type':'WebPage',name:page.title,description,url:canonical}]};
+  const graph={'@context':'https://schema.org','@graph':[{'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin,logo:productionOrigin+'/favicon.svg'},{'@type':'WebSite',name:'IELTS Kenya Center',url:productionOrigin},{'@type':'WebPage',name:dbPage?.title||fallback?.[0]||title,description,url:canonical},{'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Home',item:productionOrigin+'/'},{'@type':'ListItem',position:2,name:dbPage?.title||fallback?.[0]||title,item:canonical}]}]};
   let html=await asset.text();
   const head='<title>'+escapeHtml(title)+'</title><meta name="description" content="'+escapeHtml(description)+'"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"><link rel="canonical" href="'+escapeHtml(canonical)+'"><meta property="og:title" content="'+escapeHtml(title)+'"><meta property="og:description" content="'+escapeHtml(description)+'"><meta property="og:url" content="'+escapeHtml(canonical)+'"><meta property="og:type" content="website"><meta property="og:site_name" content="IELTS Kenya Center"><script type="application/ld+json">'+JSON.stringify(graph).replace(/</g,'\\u003c')+'</script>';
   html=html.replace(/<title>[^<]*<\/title>/i,'').replace('</head>',head+'</head>');
@@ -121,8 +135,11 @@ async function api(request: Request, env: Env): Promise<Response> {
   if (method === 'GET' && path === '/sitemap.xml') {
     const pages=await adminSupabase('/rest/v1/site_content?status=eq.published&select=content_key,updated_at&order=updated_at.desc');
     const courses=await adminSupabase('/rest/v1/courses?is_published=eq.true&select=id,updated_at');
+    const staticKeys=['ielts-preparation-kenya','academic-ielts','general-training-ielts','ielts-listening','ielts-reading','ielts-writing','ielts-speaking','ielts-practice','ielts-courses','ielts-resources'];
     const urls:[string,string][]=[[productionOrigin+'/',new Date().toISOString()]];
-    if(Array.isArray(pages.data)) for(const p of pages.data) urls.push([productionOrigin+'/page/'+encodeURIComponent(p.content_key),p.updated_at||new Date().toISOString()]);
+    const seen=new Set<string>();
+    if(Array.isArray(pages.data)) for(const p of pages.data){ const u=productionOrigin+'/page/'+encodeURIComponent(p.content_key); urls.push([u,p.updated_at||new Date().toISOString()]); seen.add(p.content_key); }
+    for(const key of staticKeys) if(!seen.has(key)) urls.push([productionOrigin+'/page/'+encodeURIComponent(key),new Date().toISOString()]);
     if(Array.isArray(courses.data)) for(const c of courses.data) urls.push([productionOrigin+'/learn/course/'+encodeURIComponent(c.id),c.updated_at||new Date().toISOString()]);
     const xml='<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+urls.map(([loc,last])=>'<url><loc>'+escapeHtml(loc)+'</loc><lastmod>'+escapeHtml(last)+'</lastmod></url>').join('')+'</urlset>';
     return new Response(xml,{headers:{'Content-Type':'application/xml; charset=utf-8','Cache-Control':'public, max-age=3600'}});

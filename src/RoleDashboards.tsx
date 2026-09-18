@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrowLeft, ArrowRight, CheckCircle2, Menu, Search, X } from 'lucide-react';
 import { api } from './api';
 
@@ -22,7 +22,7 @@ function Nav({ kind, onSignOut }: { kind: 'admin'|'staff'; onSignOut: () => Prom
   </nav>;
 }
 
-function RoleGate({ kind, children }: { kind:'admin'|'staff'; children:(identity:any)=>React.ReactNode }) {
+function RoleGate({ kind, children }: { kind:'admin'|'staff'; children:(identity:any)=>ReactNode }) {
   const [identity, setIdentity] = useState<any>(null);
   const [status, setStatus] = useState<'loading'|'ready'|'denied'>('loading');
   const [error, setError] = useState('');

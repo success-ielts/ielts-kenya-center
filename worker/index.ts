@@ -281,6 +281,162 @@ async function api(request: Request, env: Env): Promise<Response> {
   }
 
 
+
+  const staffManagementRoles = [...staffRoles, ...adminRoles];
+  const assignableStaffRoles = [...staffRoles, ...adminRoles];
+
+  async function writeStaffAudit(actorUserId: string, targetUserId: string, action: string, previousValue: unknown, newValue: unknown) {
+    await adminSupabase('/rest/v1/staff_audit_log', {
+      method: 'POST',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        actor_user_id: actorUserId,
+        target_user_id: targetUserId,
+        action,
+        previous_value: previousValue,
+        new_value: newValue,
+      }),
+    });
+  }
+
+  if (method === 'GET' && path === '/api/admin/staff') {
+    const auth = await adminAuth(request);
+    if (auth.response) return auth.response;
+    const search = (url.searchParams.get('search') || '').trim().toLowerCase();
+    const roleFilter = (url.searchParams.get('role') || '').trim();
+    const [usersResult, profilesResult, rolesResult] = await Promise.all([
+      adminSupabase('/auth/v1/admin/users?page=1&per_page=1000'),
+      adminSupabase('/rest/v1/profiles?select=id,full_name,phone_number,country,county_town,job_title,staff_active,employment_start_date,created_at,updated_at'),
+      adminSupabase('/rest/v1/profile_roles?select=profile_id,role_id,roles(id,name,description)'),
+    ]);
+    if (!usersResult.response.ok || !profilesResult.response.ok || !rolesResult.response.ok) return error('Unable to load staff accounts.', 502);
+    const profileMap = new Map((Array.isArray(profilesResult.data) ? profilesResult.data : []).map((p: any) => [p.id, p]));
+    const roleMap = new Map<string, any[]>();
+    for (const row of (Array.isArray(rolesResult.data) ? rolesResult.data : [])) {
+      if (!staffManagementRoles.includes(row?.roles?.name)) continue;
+      roleMap.set(row.profile_id, [...(roleMap.get(row.profile_id) || []), row.roles]);
+    }
+    let staff = (Array.isArray(usersResult.data?.users) ? usersResult.data.users : [])
+      .map((u: any) => {
+        const p = profileMap.get(u.id) || {};
+        const roles = roleMap.get(u.id) || [];
+        return {
+          id: u.id,
+          email: u.email || '',
+          full_name: p.full_name || u.user_metadata?.full_name || '',
+          job_title: p.job_title || null,
+          staff_active: p.staff_active ?? null,
+          employment_start_date: p.employment_start_date || null,
+          created_at: p.created_at || u.created_at || null,
+          roles: roles.map((r: any) => ({ id: r.id, name: r.name, description: r.description || null })),
+        };
+      })
+      .filter((u: any) => u.roles.length > 0);
+    if (roleFilter) staff = staff.filter((u: any) => u.roles.some((r: any) => r.name === roleFilter));
+    if (search) staff = staff.filter((u: any) => String(u.email).toLowerCase().includes(search) || String(u.full_name).toLowerCase().includes(search) || String(u.job_title || '').toLowerCase().includes(search));
+    return json({ ok: true, staff: staff.slice(0, 200), roles: assignableStaffRoles });
+  }
+
+  const adminStaffMatch = path.match(/^\/api\/admin\/staff\/([^/]+)$/);
+  if (method === 'GET' && adminStaffMatch) {
+    const auth = await adminAuth(request);
+    if (auth.response) return auth.response;
+    const targetId = decodeURIComponent(adminStaffMatch[1]);
+    const [userResult, profileResult, rolesResult] = await Promise.all([
+      adminSupabase(`/auth/v1/admin/users/${encodeURIComponent(targetId)}`),
+      adminSupabase(`/rest/v1/profiles?id=eq.${encodeURIComponent(targetId)}&select=id,full_name,phone_number,country,county_town,job_title,staff_active,employment_start_date,created_at,updated_at`),
+      adminSupabase(`/rest/v1/profile_roles?profile_id=eq.${encodeURIComponent(targetId)}&select=role_id,created_at,roles(id,name,description)`),
+    ]);
+    if (!userResult.response.ok) return error('Staff account not found.', 404);
+    if (!profileResult.response.ok || !rolesResult.response.ok) return error('Unable to load staff details.', 502);
+    const roles = (Array.isArray(rolesResult.data) ? rolesResult.data : [])
+      .map((r: any) => r.roles)
+      .filter((r: any) => r && staffManagementRoles.includes(r.name))
+      .map((r: any) => ({ id: r.id, name: r.name, description: r.description || null }));
+    if (!roles.length) return error('Staff account not found.', 404);
+    const profile = Array.isArray(profileResult.data) ? profileResult.data[0] || null : null;
+    const user = userResult.data || {};
+    return json({
+      ok: true,
+      staff: {
+        id: targetId,
+        email: user.email || '',
+        full_name: profile?.full_name || user.user_metadata?.full_name || '',
+        phone_number: profile?.phone_number || null,
+        country: profile?.country || null,
+        county_town: profile?.county_town || null,
+        job_title: profile?.job_title || null,
+        staff_active: profile?.staff_active ?? null,
+        employment_start_date: profile?.employment_start_date || null,
+        created_at: profile?.created_at || user.created_at || null,
+        updated_at: profile?.updated_at || null,
+        last_sign_in_at: user.last_sign_in_at || null,
+        roles,
+      },
+      roles: assignableStaffRoles,
+    });
+  }
+
+  const adminStaffRoleMatch = path.match(/^\/api\/admin\/staff\/([^/]+)\/roles$/);
+  if ((method === 'POST' || method === 'PATCH') && adminStaffRoleMatch) {
+    const auth = await adminAuth(request);
+    if (auth.response) return auth.response;
+    const targetId = decodeURIComponent(adminStaffRoleMatch[1]);
+    const action = String(body.action || '').trim().toLowerCase();
+    const roleName = String(body.roleName || body.role || '').trim().toLowerCase();
+    if (!['assign', 'remove'].includes(action)) return error('Role action must be assign or remove.', 400);
+    if (!roleName || !assignableStaffRoles.includes(roleName) || roleName === 'platform_owner') return error('Unknown or non-manageable role.', 400);
+    if (targetId === auth.identity!.user.id) return error('You cannot change your own roles.', 409);
+
+    const [targetUser, targetRolesResult, roleResult] = await Promise.all([
+      adminSupabase(`/auth/v1/admin/users/${encodeURIComponent(targetId)}`),
+      adminSupabase(`/rest/v1/profile_roles?profile_id=eq.${encodeURIComponent(targetId)}&select=role_id,roles(id,name,description)`),
+      adminSupabase(`/rest/v1/roles?name=eq.${encodeURIComponent(roleName)}&select=id,name,description`),
+    ]);
+    if (!targetUser.response.ok) return error('Staff account not found.', 404);
+    if (!roleResult.response.ok) return error('Unable to validate role.', 502);
+    const role = Array.isArray(roleResult.data) ? roleResult.data[0] : null;
+    if (!role || !assignableStaffRoles.includes(role.name) || role.name === 'platform_owner') return error('Unknown or non-manageable role.', 400);
+    if (!targetRolesResult.response.ok) return error('Unable to load current roles.', 502);
+
+    const currentRows = Array.isArray(targetRolesResult.data) ? targetRolesResult.data : [];
+    const currentRoles = currentRows.map((r: any) => r?.roles?.name).filter(Boolean);
+    const callerRoles = auth.identity!.roles || [];
+    const callerIsSuperAdmin = callerRoles.includes('super_admin');
+    if ((roleName === 'super_admin' || roleName === 'admin' || currentRoles.includes('super_admin') || currentRoles.includes('admin')) && !callerIsSuperAdmin) {
+      return error('Only a super administrator can change administrator roles.', 403);
+    }
+
+    if (action === 'assign') {
+      if (currentRoles.includes(roleName)) return error('That role is already assigned.', 409);
+      const insertResult = await adminSupabase('/rest/v1/profile_roles', {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ profile_id: targetId, role_id: role.id }),
+      });
+      if (!insertResult.response.ok) return error('Unable to assign the role.', insertResult.response.status === 409 ? 409 : 502);
+      await writeStaffAudit(auth.identity!.user.id, targetId, 'role_assigned', { roles: currentRoles }, { roles: [...currentRoles, roleName] });
+      return json({ ok: true, action, role: roleName, roles: [...currentRoles, roleName] });
+    }
+
+    if (!currentRoles.includes(roleName)) return error('That role is not currently assigned.', 409);
+    const isAdminRole = adminRoles.includes(roleName);
+    if (isAdminRole) {
+      const adminAssignments = await adminSupabase('/rest/v1/profile_roles?select=profile_id,roles!inner(name)&roles.name=in.(admin,super_admin)');
+      if (!adminAssignments.response.ok) return error('Unable to verify administrator protection.', 502);
+      const adminProfiles = new Set((Array.isArray(adminAssignments.data) ? adminAssignments.data : []).map((r: any) => r.profile_id));
+      const targetHasAnotherAdminRole = currentRoles.some((r: string) => adminRoles.includes(r) && r !== roleName);
+      if (adminProfiles.size <= 1 && !targetHasAnotherAdminRole) return error('The final authorized administrator cannot be removed or downgraded.', 409);
+    }
+    const deleteResult = await adminSupabase(`/rest/v1/profile_roles?profile_id=eq.${encodeURIComponent(targetId)}&role_id=eq.${encodeURIComponent(role.id)}`, {
+      method: 'DELETE',
+      headers: { Prefer: 'return=minimal' },
+    });
+    if (!deleteResult.response.ok) return error('Unable to remove the role.', deleteResult.response.status);
+    await writeStaffAudit(auth.identity!.user.id, targetId, 'role_removed', { roles: currentRoles }, { roles: currentRoles.filter((r: string) => r !== roleName) });
+    return json({ ok: true, action, role: roleName, roles: currentRoles.filter((r: string) => r !== roleName) });
+  }
+
   if (method === 'GET' && path === '/api/admin/courses') {
     const auth = await adminAuth(request); if (auth.response) return auth.response;
     const search = (url.searchParams.get('search') || '').trim().toLowerCase();

@@ -261,3 +261,41 @@ body { margin: 0; min-width: 320px; }
 .hero-brand-logo { display:block; width:min(100%, 540px); height:auto; filter:drop-shadow(0 18px 28px rgba(0,0,0,.16)); }
 .footer-brand .brand-logo { width:250px; max-height:none; }
 @media (max-width:760px) { .brand-logo { width:170px; max-height:48px; } .hero-brand-logo { width:100%; } .footer-brand .brand-logo { width:210px; } }
+
+
+/* Premium homepage direction */
+.icon-btn{display:grid;place-items:center;width:38px;height:38px;border:0;background:transparent;color:#17201d;cursor:pointer;border-radius:50%}
+.icon-btn:hover{background:#f2f4f2}
+.topbar{height:82px;padding:0 4.5vw}
+.brand-logo{width:250px;max-height:68px}
+.hero{max-width:1320px;grid-template-columns:minmax(0,1fr) minmax(520px,.95fr);gap:5vw;padding:72px 4.5vw 54px;min-height:650px}
+.hero h1{font-size:clamp(46px,5.25vw,78px);font-weight:760;line-height:.99;max-width:760px}
+.hero-copy>p{font-size:17px;max-width:670px}
+.hero-actions{margin-top:28px}
+.hero-visual{min-height:520px;border-radius:34px;position:relative;overflow:hidden;background:linear-gradient(145deg,#f3f7f4 0%,#edf2ef 58%,#f9faf9 100%);border:1px solid #dfe7e1;box-shadow:0 28px 70px rgba(20,35,28,.10)}
+.visual-map{position:absolute;inset:0;opacity:.38;background-image:radial-gradient(circle at 68% 25%,rgba(7,118,53,.12) 0 2px,transparent 3px),radial-gradient(circle at 74% 31%,rgba(201,10,15,.09) 0 2px,transparent 3px);background-size:20px 20px}
+.visual-map:after{content:"";position:absolute;inset:15% 10%;border:1px dashed rgba(23,32,29,.08);border-radius:50% 45% 55% 40%;transform:rotate(-13deg)}
+.visual-card{position:absolute;z-index:5;width:218px;padding:18px 18px 16px;background:rgba(255,255,255,.96);border:1px solid #e5e9e6;border-radius:18px;box-shadow:0 18px 40px rgba(20,35,28,.12);font-size:12px}
+.skills-card{left:28px;top:42px}.goals-card{left:28px;bottom:58px}
+.visual-card-title{display:flex;gap:11px;align-items:center;line-height:1.1;font-size:13px}.visual-card-title strong{font-size:15px}
+.visual-icon{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:0 0 auto}
+.visual-icon.green{background:#e7f4eb;color:#077635}.visual-icon.red{background:#fdebec;color:#c90a0f}
+.visual-card ul{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:7px}.visual-card li:before{content:"✓";display:inline-grid;place-items:center;width:16px;height:16px;margin-right:7px;border-radius:50%;background:#0b8a46;color:#fff;font-size:10px;font-weight:900}
+.student-visual{position:absolute;z-index:3;right:54px;bottom:-20px;width:350px;height:500px}
+.student-halo{position:absolute;width:310px;height:310px;right:8px;top:20px;border-radius:50%;background:radial-gradient(circle,#fff 0 45%,rgba(221,235,225,.72) 46% 100%)}
+.student-head{position:absolute;z-index:4;right:88px;top:76px;width:132px;height:158px;border-radius:48% 48% 45% 45%;background:linear-gradient(145deg,#9a5c3e,#d08b61 55%,#74412e);box-shadow:inset -12px -10px 0 rgba(70,35,25,.10)}
+.student-hair{position:absolute;z-index:5;right:63px;top:50px;width:178px;height:260px;border-radius:55% 55% 44% 48%;background:repeating-linear-gradient(92deg,#171413 0 5px,#2b211e 6px 9px);transform:rotate(-4deg);box-shadow:-10px 12px 0 rgba(20,20,20,.05)}
+.student-body{position:absolute;z-index:2;right:25px;bottom:0;width:320px;height:315px;border-radius:150px 150px 35px 35px;background:linear-gradient(145deg,#d70c18,#b40810);transform:rotate(-2deg);box-shadow:inset 35px 0 0 rgba(255,255,255,.05)}
+.student-body:before{content:"";position:absolute;right:-18px;top:48px;width:96px;height:210px;border-radius:35px;background:#1c2220;transform:rotate(-8deg)}
+.student-book{position:absolute;z-index:7;left:52px;bottom:48px;width:178px;height:225px;border-radius:8px;background:linear-gradient(145deg,#252a28,#111514);box-shadow:0 18px 28px rgba(0,0,0,.22);display:grid;place-items:center;text-align:center;color:#fff;transform:rotate(-3deg)}
+.student-book strong{font-family:Georgia,serif;font-style:italic;font-size:21px;line-height:1.05}.student-book strong:after{content:"";display:block;width:56px;height:3px;background:#e20c17;margin:9px auto 0}
+.global-note{position:absolute;z-index:6;right:20px;top:78px;font-family:cursive;font-size:24px;line-height:1.08;transform:rotate(-5deg);color:#151918}
+.global-note span{display:block;width:92px;height:5px;background:#df1018;margin:8px 0 0 12px;transform:rotate(-7deg);border-radius:8px}
+.global-card{position:absolute;z-index:8;right:22px;bottom:82px;width:176px;padding:16px;background:#fff;border-radius:17px;box-shadow:0 18px 40px rgba(20,35,28,.13);display:flex;gap:10px;align-items:flex-start;font-size:11px;line-height:1.25}.global-card b{color:#c90a0f}
+.kenya-ribbon{position:absolute;z-index:9;left:-30px;right:-30px;height:13px;bottom:23px;transform:rotate(-4deg);border-radius:100%}.ribbon-black{bottom:48px;background:#151918}.ribbon-red{bottom:34px;background:#d90b13}.ribbon-green{bottom:20px;background:#07803d}
+.trust-strip{grid-template-columns:repeat(4,1fr);background:#fff}
+.trust-strip>div{padding:22px 4vw;display:grid;grid-template-columns:auto 1fr;column-gap:12px;align-items:center;border-right:1px solid #e8ece9}
+.trust-strip>div:last-child{border-right:0}.trust-strip strong{font-size:14px}.trust-strip small{grid-column:2;color:#707877;font-size:11px;margin-top:2px}
+.trust-icon{grid-row:1/3;width:40px;height:40px;border-radius:50%;display:grid;place-items:center}.trust-icon.red{background:#fde9eb;color:#c90a0f}.trust-icon.green{background:#e7f3eb;color:#077635}
+@media(max-width:1100px){.hero{grid-template-columns:1fr}.hero-visual{min-height:500px}.desktop-nav{gap:14px}.brand-logo{width:225px}}
+@media(max-width:760px){.topbar{height:76px;padding:0 18px}.brand-logo{width:190px;max-height:54px}.hero{padding:48px 20px 44px}.hero h1{font-size:43px}.hero-visual{min-height:430px;border-radius:25px}.visual-card{width:175px;padding:13px;transform:scale(.92);transform-origin:left top}.skills-card{left:12px;top:20px}.goals-card{left:12px;bottom:36px}.student-visual{right:-12px;bottom:-22px;transform:scale(.78);transform-origin:right bottom}.global-note{right:8px;top:45px;font-size:19px}.global-card{right:10px;bottom:55px;width:145px;padding:12px;font-size:10px}.kenya-ribbon{left:-50px;right:-50px}.trust-strip{grid-template-columns:1fr 1fr}.trust-strip>div{padding:18px 20px}.trust-strip>div:nth-child(2){border-right:0}.trust-strip>div:nth-child(-n+2){border-bottom:1px solid #e8ece9}}

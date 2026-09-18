@@ -30,6 +30,53 @@ const sections = [
   { label: 'Resources', href: '/page/ielts-resources' },
 ];
 
+function LearningIntelligence() {
+  const [goal, setGoal] = useState<'study' | 'work' | 'migration' | 'improve'>('study');
+  const [band, setBand] = useState('7.0');
+  const plans = {
+    study: ['Academic IELTS pathway', 'Reading + Writing depth', 'Weekly timed practice', 'Mock exam calibration'],
+    work: ['General Training pathway', 'Practical communication', 'Workplace vocabulary', 'Speaking confidence'],
+    migration: ['General Training pathway', 'Four-skill consistency', 'Timed exam routines', 'Readiness checkpoints'],
+    improve: ['Skill diagnostic', 'Weak-area priority', 'Targeted practice', 'Progress review'],
+  };
+  const goalLabels = { study: 'Study abroad', work: 'International work', migration: 'Migration', improve: 'Improve my score' };
+  return (
+    <section className="ai-intelligence section" id="ai-learning">
+      <div className="ai-intelligence-head">
+        <div>
+          <span className="kicker">IELTS INTELLIGENCE LAYER</span>
+          <h2>A learning platform designed for the next generation.</h2>
+          <p>Instead of giving every learner the same timetable, the platform is structured to adapt the learning journey around your goal, target band, performance and pace.</p>
+        </div>
+        <div className="ai-orbit" aria-label="Learning intelligence">
+          <span>AI</span><small>LEARNING<br />ENGINE</small>
+        </div>
+      </div>
+      <div className="ai-grid">
+        <div className="ai-console">
+          <div className="ai-console-top"><span>PERSONAL PATHWAY</span><strong>READY</strong></div>
+          <label>Your goal<select value={goal} onChange={e => setGoal(e.target.value as typeof goal)}><option value="study">Study abroad</option><option value="work">International work</option><option value="migration">Migration</option><option value="improve">Improve my score</option></select></label>
+          <label>Target band<select value={band} onChange={e => setBand(e.target.value)}>{['6.0','6.5','7.0','7.5','8.0','8.5','9.0'].map(v => <option key={v}>{v}</option>)}</select></label>
+          <div className="ai-recommendation"><span className="status-dot" /><div><small>NEXT RECOMMENDATION</small><strong>{goalLabels[goal]} • Band {band}</strong><p>{plans[goal][0]}. Your pathway can prioritize the skills and practice history that need the most attention.</p></div></div>
+          <div className="ai-path">{plans[goal].map((item, i) => <div key={item}><span>{String(i + 1).padStart(2, '0')}</span><strong>{item}</strong>{i < plans[goal].length - 1 && <i />}</div>)}</div>
+          <button className="primary-btn" onClick={() => openAuth('signup')}>Build my learning profile <ArrowRight size={17} /></button>
+        </div>
+        <div className="ai-capabilities">
+          {[
+            ['Adaptive pathways', 'Adjust study priorities from learner goals, results and progress.'],
+            ['Performance intelligence', 'Turn practice history into clear next-step recommendations.'],
+            ['AI-ready feedback', 'Create a foundation for writing, speaking and tutor feedback workflows.'],
+            ['Human + AI support', 'Keep tutors in control while technology handles routine learning signals.'],
+          ].map(([title, description], i) => (
+            <article key={title}><span>0{i + 1}</span><div><h3>{title}</h3><p>{description}</p></div></article>
+          ))}
+        </div>
+      </div>
+      <p className="ai-note">Learning recommendations are guidance features, not official IELTS scoring or exam results. Official IELTS testing and results remain with the relevant official test services.</p>
+    </section>
+  );
+}
+
 function PhotoStrip({ items }: { items: Array<{ src: string; alt: string }> }) {
   return (
     <div
@@ -351,6 +398,7 @@ function App() {
             </div>
           </div>
         </section>
+        <LearningIntelligence />
         <section className="trust-strip">
           <div>
             <strong>Academic & General Training</strong>

@@ -537,7 +537,7 @@ async function api(request: Request, env: Env): Promise<Response> {
   }
 
   if (method === 'GET' && path === '/api/pages') {
-    const result = await supabase(env, '/rest/v1/site_content?status=eq.published&select=content_key,title,body,updated_at&order=title.asc');
+    const result = await adminSupabase('/rest/v1/site_content?status=eq.published&select=content_key,title,body,updated_at&order=title.asc');
     if (!result.response.ok) return error('Unable to load published pages.', 502);
     return json({ok:true,pages:Array.isArray(result.data) ? result.data : []},{headers:{'Cache-Control':'no-store'}});
   }

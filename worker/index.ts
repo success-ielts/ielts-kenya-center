@@ -117,6 +117,7 @@ const escapeHtml = (value: unknown) => String(value ?? '').replace(/&/g,'&amp;')
   let html=await asset.text();
   const head='<title>'+escapeHtml(title)+'</title><meta name="description" content="'+escapeHtml(description)+'"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"><link rel="canonical" href="'+escapeHtml(canonical)+'"><meta property="og:title" content="'+escapeHtml(title)+'"><meta property="og:description" content="'+escapeHtml(description)+'"><meta property="og:url" content="'+escapeHtml(canonical)+'"><meta property="og:type" content="website"><meta property="og:site_name" content="IELTS Kenya Center"><script type="application/ld+json">'+JSON.stringify(graph).replace(/</g,'\\u003c')+'</script>';
   html=html.replace(/<title>[^<]*<\/title>/i,'').replace('</head>',head+'</head>');
+  if (!html.includes('<h1>')) html=html.replace('<div id="root"></div>','<div id="root"><main><article><h1>'+escapeHtml(dbPage?.title||fallback?.[0]||title)+'</h1><p>'+escapeHtml(dbPage?.body?.description||fallback?.[1]||description)+'</p></article></main></div>');
   return new Response(html,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'public, max-age=300'}});
 }
 
@@ -132,6 +133,12 @@ async function publicCourseSeoShell(request: Request, env: Env, slug: string) {
   let html=await asset.text();
   const head='<title>'+escapeHtml(title)+'</title><meta name="description" content="'+escapeHtml(description)+'"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"><link rel="canonical" href="'+escapeHtml(canonical)+'"><meta property="og:title" content="'+escapeHtml(title)+'"><meta property="og:description" content="'+escapeHtml(description)+'"><meta property="og:url" content="'+escapeHtml(canonical)+'"><meta property="og:type" content="website"><meta property="og:site_name" content="IELTS Kenya Center"><script type="application/ld+json">'+JSON.stringify(graph).replace(/</g,'\\u003c')+'</script>';
   html=html.replace(/<title>[^<]*<\/title>/i,'').replace('</head>',head+'</head>');
+  if (course) {
+    const modulesResult=await adminSupabase('/rest/v1/course_modules?course_id=eq.'+encodeURIComponent(course.id)+'&select=id,title,description,sort_order&order=sort_order.asc');
+    const modules=Array.isArray(modulesResult.data)?modulesResult.data:[];
+    const body='<main><article><h1>'+escapeHtml(course.title)+'</h1><p>'+escapeHtml(course.description||description)+'</p><h2>Course overview</h2><p>Structured IELTS preparation organised into modules and published lessons.</p><ol>'+modules.map((m:any)=>'<li><strong>'+escapeHtml(m.title)+'</strong>'+(m.description?': '+escapeHtml(m.description):'')+'</li>').join('')+'</ol><p><a href="/page/ielts-courses">Explore all IELTS courses</a> · <a href="/?signup=1">Create a learner account</a></p></article></main>';
+    html=html.replace('<div id="root"></div>','<div id="root">'+body+'</div>');
+  }
   return new Response(html,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'public, max-age=300'}});
 }
 \nasync function api(request: Request, env: Env): Promise<Response> {
@@ -145,6 +152,8 @@ async function publicCourseSeoShell(request: Request, env: Env, slug: string) {
     const pages=await adminSupabase('/rest/v1/site_content?status=eq.published&select=content_key,title,body&order=title.asc');
     const lines=['# IELTS Kenya Center','> IELTS preparation, practice and learning resources for students in Kenya.','','IELTS Kenya Center provides structured IELTS learning content, preparation resources and learner-focused study tools.',''];
     if(Array.isArray(pages.data)&&pages.data.length){lines.push('## Public pages');for(const p of pages.data){const d=seoText(p.body?.seo?.description||p.body?.description||'',220);lines.push('- ['+p.title+']('+productionOrigin+'/page/'+encodeURIComponent(p.content_key)+')'+(d?' — '+d:''));}}
+    const courses=await adminSupabase('/rest/v1/courses?is_published=eq.true&select=slug,title,description&order=title.asc');
+    if(Array.isArray(courses.data)&&courses.data.length){lines.push('','## Published IELTS courses');for(const c of courses.data){lines.push('- ['+c.title+']('+productionOrigin+'/course/'+encodeURIComponent(c.slug)+') — '+seoText(c.description||'',220));}}
     lines.push('','## Primary website',productionOrigin+'/','');
     return new Response(lines.join('\n'),{headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'public, max-age=3600'}});
   }
@@ -185,7 +194,7 @@ async function publicCourseSeoShell(request: Request, env: Env, slug: string) {
     return json({ok:true,course:{...course,modules:visibleModules,total_lessons:visibleModules.reduce((n:number,m:any)=>n+m.lesson_count,0)}},{headers:{'Cache-Control':'public, max-age=300'}});
   }
 
-  if (method === 'GET' && path === '/course/' ) return new Response('');\n
+
   const publicCourseRoute=path.match(/^\\/course\\/([^/]+)$/);
   if(method==='GET'&&publicCourseRoute) return publicCourseSeoShell(request,env,decodeURIComponent(publicCourseRoute[1]));
 \n  if (method === 'GET' && path === '/api/_healthcheck') return json({ ok: true, service: 'ielts-kenya-center', release: env.RELEASE_ID || 'unknown' }, { headers: { 'Cache-Control': 'no-store' } });

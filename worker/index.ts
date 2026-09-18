@@ -7,6 +7,7 @@ interface Env {
   RESEND_API_KEY: string;
   CLOUDFLARE_API_TOKEN?: string;
   OPS_SETUP_KEY?: string;
+  RELEASE_ID?: string;
 }
 
 const cookieName = 'ikc_session';
@@ -86,7 +87,7 @@ async function api(request: Request, env: Env): Promise<Response> {
   let body: any = {};
   if (method !== 'GET' && method !== 'HEAD') { try { body = await request.json(); } catch { body = {}; } }
 
-  if (method === 'GET' && path === '/api/_healthcheck') return json({ ok: true, service: 'ielts-kenya-center' });
+  if (method === 'GET' && path === '/api/_healthcheck') return json({ ok: true, service: 'ielts-kenya-center', release: env.RELEASE_ID || 'unknown' }, { headers: { 'Cache-Control': 'no-store' } });
   if (method === 'GET' && path === '/api/config-status') return json({ supabaseConfigured: Boolean(env.SUPABASE_URL && env.SUPABASE_PUBLISHABLE_KEY) });
   if (method === 'POST' && path === '/api/email/status') return json({ configured: Boolean(env.RESEND_API_KEY), from: 'IELTS Kenya Center <admin@ielts-kenyacenter.or.ke>' });
 

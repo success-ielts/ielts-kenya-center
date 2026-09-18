@@ -55,7 +55,7 @@ async function getRoleId(env: StaffEnv, roleName: string) {
   return r.data[0].id as string;
 }
 
-async function getStaffRows(env: StaffEnv, search: string) {
+async function getStaffRows(env: StaffEnv, search: string, roleFilter = '', statusFilter = '') {
   const users = await adminSupabase(env, '/auth/v1/admin/users?page=1&per_page=1000');
   if (!users.response.ok) throw new Error('users');
   const all = Array.isArray(users.data?.users) ? users.data.users : [];
@@ -71,7 +71,11 @@ async function getStaffRows(env: StaffEnv, search: string) {
     rows.push({ id:u.id, email:u.email||'', full_name:p.full_name||u.user_metadata?.full_name||'', phone_number:p.phone_number||'', profile_photo_url:p.profile_photo_url||'', job_title:p.job_title||'', staff_active:p.staff_active !== false, employment_start_date:p.employment_start_date||null, created_at:p.created_at||u.created_at||null, last_sign_in_at:u.last_sign_in_at||null, roles });
   }
   const q = search.toLowerCase();
-  return q ? rows.filter(r => [r.email,r.full_name,r.phone_number,r.job_title,...r.roles].join(' ').toLowerCase().includes(q)) : rows;
+  let filtered = q ? rows.filter(r => [r.email,r.full_name,r.phone_number,r.job_title,...r.roles].join(' ').toLowerCase().includes(q)) : rows;
+  if (roleFilter) filtered = filtered.filter(r => r.roles.includes(roleFilter));
+  if (statusFilter === 'active') filtered = filtered.filter(r => r.staff_active);
+  if (statusFilter === 'inactive') filtered = filtered.filter(r => !r.staff_active);
+  return filtered;
 }
 
 export async function handleStaffAdmin(request: Request, env: StaffEnv, path: string, method: string, body: any): Promise<Response | null> {
@@ -83,8 +87,13 @@ export async function handleStaffAdmin(request: Request, env: StaffEnv, path: st
 
   try {
     if (method === 'GET' && path === '/api/admin/staff') {
-      const search = new URL(request.url).searchParams.get('search')?.trim() || '';
-      return json({ ok:true, staff: await getStaffRows(env, search) });
+      const params = new URL(request.url).searchParams;
+      const search = params.get('search')?.trim() || '';
+      const role = params.get('role')?.trim() || '';
+      const status = params.get('status')?.trim() || '';
+      if (role && !MANAGED_ROLES.includes(role)) return error('Invalid role filter.',400);
+      if (status && !['active','inactive'].includes(status)) return error('Invalid status filter.',400);
+      return json({ ok:true, staff: await getStaffRows(env, search, role, status) });
     }
 
     const match = path.match(/^\/api\/admin\/staff\/([^/]+)$/);

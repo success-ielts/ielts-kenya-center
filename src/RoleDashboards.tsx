@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrowLeft, ArrowRight, CheckCircle2, Menu, Search, X } from 'lucide-react';
 import { api } from './api';
 

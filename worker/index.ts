@@ -377,7 +377,7 @@ async function api(request: Request, env: Env): Promise<Response> {
     });
   }
 
-  const adminStaffStatusMatch = path.match(/^\\/api\\/admin\\/staff\\/([^/]+)\\/status$/);
+  const adminStaffStatusMatch = path.match(/^\/api\/admin\/staff\/([^/]+)\/status$/);
   if (method === 'PATCH' && adminStaffStatusMatch) {
     const auth = await adminAuth(request);
     if (auth.response) return auth.response;

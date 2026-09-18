@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState, type ReactNode } from 'react';
 import { ArrowRight, Eye, EyeOff, GraduationCap, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
 import { api } from './api';
+import { destinationFor } from './auth-routing';
 import './auth.css';
 
 const productionOrigin = 'https://ielts-kenyacenter.or.ke';
@@ -22,12 +23,6 @@ function mapAuthError(err: any) {
   return err?.response?.data?.message || err?.message || 'We could not sign you in. Please try again.';
 }
 
-function destinationFor(user: any) {
-  const roles = [...(Array.isArray(user?.roles) ? user.roles : []), user?.role, user?.user_metadata?.role, user?.app_metadata?.role].filter(Boolean).map((v: any) => String(v).toLowerCase());
-  if (roles.some(r => ['admin', 'super_admin'].includes(r))) return '/admin/dashboard';
-  if (roles.some(r => ['staff', 'tutor', 'instructor'].includes(r))) return '/staff/dashboard';
-  return '/dashboard';
-}
 
 export function LoginPage() {
   const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [busy, setBusy] = useState(false); const [message, setMessage] = useState(''); const [googleBusy, setGoogleBusy] = useState(false); const [googleConfigured, setGoogleConfigured] = useState(false);

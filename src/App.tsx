@@ -115,7 +115,8 @@ function PublicCoursePage({ slug }: { slug:string }) {
     <section className="assessment section"><div className="assessment-card"><div><span className="kicker">READY TO LEARN?</span><h2>Create your learner account.</h2><p>Sign in or create an account to access enrolled course lessons, practice content and progress tracking.</p></div><button className="primary-btn" onClick={()=>{window.location.href='/?signup=1'}}>Create account <ArrowRight size={18}/></button></div></section>
   </main>;
 }
-\nfunction CourseView({ courseId }: { courseId:string }) {
+
+function CourseView({ courseId }: { courseId:string }) {
   const [data,setData]=useState<any>(null); const [error,setError]=useState('');
   useEffect(()=>{api.get('/api/learning/courses/'+encodeURIComponent(courseId)).then(r=>setData(r.data)).catch((e:any)=>setError(e?.response?.data?.message||'Unable to load this course.'))},[courseId]);
   if(error)return <main className="learner-shell"><section className="learner-hero"><div><span className="kicker">COURSE</span><h1>Access unavailable</h1><p>{error}</p><a className="secondary-btn" href="/">Return to dashboard</a></div></section></main>;
@@ -142,7 +143,9 @@ function App() {
   const [authBusy, setAuthBusy] = useState(false);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {\n    if (new URLSearchParams(window.location.search).get('signup') === '1') { setAuthMode('signup'); setAuthOpen(true); }\n   api
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('signup') === '1') { setAuthMode('signup'); setAuthOpen(true); }
+   api
       .get('/api/auth/me')
       .then(({ data }) => {
         setUser(data.user);
@@ -212,7 +215,8 @@ function App() {
   const publicCourseRoute=currentPath.match(/^\/course\/([^/]+)$/);
   const lessonRoute=currentPath.match(/^\/learn\/lesson\/([^/]+)$/);
   const pageRoute=currentPath.match(/^\/page\/([^/]+)$/);
-  if (!loading && pageRoute) return <PublicPage pageKey={decodeURIComponent(pageRoute[1])}/>;\n  if (!loading && publicCourseRoute) return <PublicCoursePage slug={decodeURIComponent(publicCourseRoute[1])}/>;
+  if (!loading && pageRoute) return <PublicPage pageKey={decodeURIComponent(pageRoute[1])}/>;
+  if (!loading && publicCourseRoute) return <PublicCoursePage slug={decodeURIComponent(publicCourseRoute[1])}/>;
   if (!loading && lessonRoute && user) return <LessonView lessonId={decodeURIComponent(lessonRoute[1])}/>;
   if (!loading && courseRoute && user) return <CourseView courseId={decodeURIComponent(courseRoute[1])}/>;
 

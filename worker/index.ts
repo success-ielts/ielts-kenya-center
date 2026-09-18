@@ -105,7 +105,7 @@ const staticSeoBody:any={
     'general-training-success':['IELTS General Training Success','Intermediate General Training IELTS course covering practical Reading, Writing, Listening and Speaking preparation.'],
     'speaking-writing-workshop':['Speaking & Writing Workshop','Focused IELTS Speaking and Writing course covering task structure, language development and feedback routines.']
   };
-\nasync function publicSeoShell(request: Request, env: Env, pageKey: string) {
+async function publicSeoShell(request: Request, env: Env, pageKey: string) {
   const result = await adminSupabase('/rest/v1/site_content?content_key=eq.' + encodeURIComponent(pageKey) + '&status=eq.published&select=content_key,title,body&limit=1');
   const asset = await env.ASSETS.fetch(new Request(new URL('/index.html', request.url), {headers:request.headers}));
   const staticSeo:any={
@@ -155,7 +155,7 @@ async function publicCourseSeoShell(request: Request, env: Env, slug: string) {
   }
   return new Response(html,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'public, max-age=300'}});
 }
-\nasync function api(request: Request, env: Env): Promise<Response> {
+async function api(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
   const method = request.method;
@@ -211,7 +211,7 @@ async function publicCourseSeoShell(request: Request, env: Env, slug: string) {
 
   const publicCourseRoute=path.match(/^\\/course\\/([^/]+)$/);
   if(method==='GET'&&publicCourseRoute) return publicCourseSeoShell(request,env,decodeURIComponent(publicCourseRoute[1]));
-\n  if (method === 'GET' && path === '/api/_healthcheck') return json({ ok: true, service: 'ielts-kenya-center', release: env.RELEASE_ID || 'unknown' }, { headers: { 'Cache-Control': 'no-store' } });
+  if (method === 'GET' && path === '/api/_healthcheck') return json({ ok: true, service: 'ielts-kenya-center', release: env.RELEASE_ID || 'unknown' }, { headers: { 'Cache-Control': 'no-store' } });
   if (method === 'GET' && path === '/api/config-status') return json({ supabaseConfigured: Boolean(env.SUPABASE_URL && env.SUPABASE_PUBLISHABLE_KEY) });
   if (method === 'POST' && path === '/api/email/status') return json({ configured: Boolean(env.RESEND_API_KEY), from: 'IELTS Kenya Center <admin@ielts-kenyacenter.or.ke>' });
 

@@ -280,7 +280,24 @@ function ListeningPage({ page }: { page:any }) {
         <p>Practise different formats so the question itself does not become the distraction.</p>
       </div>
       <div className="question-grid">
-        {questionTypes.map((item,i)=><article key={item}><span>0{i+1}</span><strong>{item}</strong><p>Read the instructions first, predict what you need and then listen for the evidence.</p></article>)}
+        {questionTypes.map((item,i)=><article key={item}><span>0{i+1}</span><strong>{item}</strong><p>Read the instructions first, predict what you need and then listen for the evidence.</p><b>Train this format →</b></article>)}
+      </div>
+    </section>
+
+    <section className="section listening-flow">
+      <div className="section-heading">
+        <div><span className="kicker">EXAM FLOW</span><h2>Know how to manage the recording from start to finish.</h2></div>
+        <p>Use the short preparation windows wisely, stay with the speaker and keep moving when an answer is missed.</p>
+      </div>
+      <div className="listening-flow-card">
+        <div className="audio-visual" aria-hidden="true">
+          <div className="audio-head"><span className="status-dot"/> LISTENING SESSION <strong>READY</strong></div>
+          <div className="wave">{Array.from({length:28},(_,i)=><i key={i} style={{height:(18+(i%7)*7)+'px'}}/>)}</div>
+          <div className="audio-time"><span>00:00</span><span>FOCUS • FOLLOW • ANSWER</span><span>30:00</span></div>
+        </div>
+        <div className="flow-points">
+          {[['01','Read','Use the question and instructions to predict the information you need.'],['02','Listen','Follow the recording once and write answers as you hear the evidence.'],['03','Check','Use transfer time carefully and check spelling, numbers and grammar.'],['04','Review','After practice, identify the reason behind every missed answer.']].map(([n,t,d])=><article key={n}><span>{n}</span><div><h3>{t}</h3><p>{d}</p></div></article>)}
+        </div>
       </div>
     </section>
 

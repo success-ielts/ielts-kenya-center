@@ -338,7 +338,7 @@ function PublicPage({ pageKey }: { pageKey:string }) {
         <section className="learner-hero"><div><span className="kicker">IELTS KENYA CENTER</span><h1>{staticPage.title}</h1><p>{staticPage.intro}</p></div><a className="secondary-btn" href="/">Home</a></section>
         <section className="learner-section"><div className="page-content">{staticPage.sections.map((s,i)=><section key={i}><h2>{s.heading}</h2>{(s.paragraphs||[]).map((p,j)=><p key={j}>{p}</p>)}{s.bullets&&<ul>{s.bullets.map((b,j)=><li key={j}>{b}</li>)}</ul>}</section>)}<section><h2>Related IELTS resources</h2><div style={{display:'grid',gap:10}}>{staticPage.links.map((l,i)=><a key={i} className="ops-detail-row" href={l.href} style={{display:'flex',textDecoration:'none',color:'inherit'}}><span><strong>{l.label}</strong><small>Continue your IELTS preparation</small></span><ArrowRight size={16}/></a>)}</div></section></div></section>
       </>}
-    </main>}{isListening ? null : <PublicFooter/>}</div>;
+    </main>}<PublicFooter/></div>;
   }
   if(error)return <main className="learner-shell"><section className="learner-hero"><div><span className="kicker">PAGE</span><h1>Page unavailable</h1><p>{error}</p><a className="secondary-btn" href="/">Return home</a></div></section></main>;
   if(!page)return <main className="learner-shell"><section style={{padding:40}}>Loading page…</section></main>;

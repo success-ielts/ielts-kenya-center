@@ -402,3 +402,52 @@ body { margin: 0; min-width: 320px; }
   .smart-form { grid-template-columns:1fr; }
   .smart-form label:nth-child(3), .smart-form label:nth-child(4), .smart-form button { grid-column:auto; }
 }
+
+
+/* IELTS preparation page */
+.preparation-page{background:#f7f7f3}
+.prep-hero{max-width:1180px;margin:0 auto;padding:76px 32px 54px;display:grid;grid-template-columns:1.05fr .95fr;gap:54px;align-items:center}
+.prep-hero-copy h1{font-size:clamp(46px,6vw,78px);line-height:.98;letter-spacing:-.055em;margin:14px 0 22px;max-width:760px}
+.prep-hero-copy>p{font-size:18px;line-height:1.75;max-width:650px;color:#52605b}
+.prep-hero-image{height:560px;border-radius:30px;overflow:hidden;background:#e7ece8;box-shadow:0 24px 70px rgba(25,50,40,.12)}
+.prep-hero-image img{width:100%;height:100%;display:block;object-fit:cover}
+.prep-facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.prep-facts span{padding:10px 13px;border:1px solid #dce3de;border-radius:999px;background:#fff;font-size:13px;color:#53605b}
+.prep-facts strong{color:#176b53;margin-right:4px}
+.prep-intro{padding-top:54px}
+.prep-skill-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.prep-skill-card{background:#fff;border:1px solid #e1e6e2;border-radius:22px;overflow:hidden;display:grid;grid-template-columns:180px 1fr;min-height:230px;box-shadow:0 12px 30px rgba(25,50,40,.05)}
+.prep-skill-card img{width:100%;height:100%;min-height:230px;object-fit:cover}
+.prep-skill-card>div{padding:24px}
+.prep-skill-card h3{font-size:27px;margin:6px 0 8px}
+.prep-skill-card p{color:#596762;line-height:1.65;margin:0 0 18px}
+.prep-skill-card a,.prep-links a{display:inline-flex;align-items:center;gap:8px;color:#176b53;font-weight:800;text-decoration:none}
+.prep-routine{background:#103f34;color:#fff;border-radius:28px;max-width:1180px;margin:40px auto;padding:58px 48px}
+.prep-routine .section-heading p{color:#cbd8d3}
+.prep-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.prep-steps article{border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:22px;background:rgba(255,255,255,.055)}
+.prep-steps span{font-size:12px;color:#b9d5c9;font-weight:800}
+.prep-steps h3{font-size:19px;margin:26px 0 10px}
+.prep-steps p{color:#d1ddd8;line-height:1.55;font-size:14px}
+.prep-path-card{display:flex;align-items:center;justify-content:space-between;gap:30px;border:1px solid #dfe6e1;border-radius:24px;background:#fff;padding:38px}
+.prep-path-card h2{margin:8px 0 10px}
+.prep-path-card p{color:#5c6964;max-width:700px;line-height:1.6}
+.prep-links{border-top:1px solid #dfe4e1}
+.prep-links a{width:100%;justify-content:space-between;padding:21px 4px;border-bottom:1px solid #dfe4e1;color:#171b19}
+.prep-links a>span{display:flex;flex-direction:column;gap:5px}
+.prep-links a small{color:#6a756f;font-weight:500}
+@media(max-width:850px){
+  .prep-hero{grid-template-columns:1fr;padding:48px 20px 36px;gap:28px}
+  .prep-hero-image{height:390px}
+  .prep-skill-grid{grid-template-columns:1fr}
+  .prep-skill-card{grid-template-columns:140px 1fr}
+  .prep-steps{grid-template-columns:repeat(2,1fr)}
+  .prep-routine{margin:24px 20px;padding:38px 24px}
+  .prep-path-card{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:560px){
+  .prep-hero-copy h1{font-size:48px}
+  .prep-skill-card{grid-template-columns:1fr}
+  .prep-skill-card img{height:210px;min-height:0}
+  .prep-steps{grid-template-columns:1fr}
+}

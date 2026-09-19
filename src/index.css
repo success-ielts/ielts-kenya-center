@@ -532,3 +532,71 @@ body { margin: 0; min-width: 320px; }
 .question-grid article b{display:block;margin-top:18px;font-size:10px;color:#b9d5c9;letter-spacing:.04em}
 @media(max-width:900px){.listening-flow-card{grid-template-columns:1fr}.audio-visual{min-height:280px}}
 @media(max-width:600px){.flow-points{grid-template-columns:1fr}.flow-points article{min-height:0}.audio-visual{min-height:250px}}
+
+
+/* Listening practice */
+.practice-shell { background: #f6f7f4; }
+.listening-practice-page { min-height: 100vh; color: #17191b; }
+.practice-hero { max-width: 1180px; margin: 0 auto; padding: 72px 28px 46px; display: grid; grid-template-columns: 1.35fr .65fr; gap: 36px; align-items: end; }
+.practice-hero h1 { margin: 12px 0 16px; font-size: clamp(3rem, 7vw, 6.2rem); line-height: .9; letter-spacing: -.055em; max-width: 780px; }
+.practice-hero h1 em { font-style: normal; font-size: .34em; vertical-align: top; letter-spacing: -.02em; margin-left: 8px; color: #747a7c; }
+.practice-hero p { max-width: 720px; color: #62686b; line-height: 1.7; font-size: 1.05rem; margin: 0; }
+.practice-notice { display: inline-flex; margin-top: 22px; padding: 9px 12px; border: 1px solid #dfe3df; border-radius: 999px; color: #52585b; background: #fff; font-size: .78rem; font-weight: 700; letter-spacing: .04em; }
+.practice-meta { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.practice-meta span { background: #fff; border: 1px solid #e2e5e1; border-radius: 15px; padding: 15px 17px; color: #6b7073; }
+.practice-meta strong { display: block; color: #17191b; font-size: 1.05rem; margin-bottom: 3px; }
+.practice-main { max-width: 1180px; margin: 0 auto; padding: 0 28px 72px; }
+.practice-player { background: #17191b; color: #fff; border-radius: 26px; padding: 30px; box-shadow: 0 18px 50px rgba(20,22,24,.12); }
+.practice-player-head { display: flex; justify-content: space-between; gap: 28px; align-items: end; }
+.practice-player h2 { margin: 8px 0 9px; font-size: clamp(1.55rem, 3vw, 2.4rem); letter-spacing: -.035em; }
+.practice-player p { margin: 0; color: #bfc4c5; line-height: 1.6; max-width: 680px; }
+.practice-player-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.practice-player-actions .secondary-btn { color: #fff; border-color: #4a4e50; }
+.practice-wave { height: 118px; margin: 28px 0 16px; padding: 0 10px; display: flex; align-items: center; justify-content: center; gap: 5px; border-top: 1px solid #303436; border-bottom: 1px solid #303436; overflow: hidden; }
+.practice-wave i { display: block; width: 4px; border-radius: 999px; background: #d7dbd9; opacity: .72; }
+.practice-player-foot { display: flex; justify-content: space-between; gap: 18px; color: #aeb3b5; font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; }
+.practice-transcript { margin-top: 22px; padding: 20px; border: 1px solid #34383a; border-radius: 16px; background: #202325; }
+.practice-transcript strong { display: block; margin-bottom: 9px; }
+.practice-transcript p { white-space: pre-line; color: #c9cdce; font-size: .94rem; }
+.practice-questions { margin-top: 24px; background: #fff; border: 1px solid #e2e5e1; border-radius: 26px; padding: 30px; }
+.practice-section-head { display: flex; justify-content: space-between; gap: 18px; align-items: end; margin-bottom: 22px; }
+.practice-section-head h2 { margin: 8px 0 0; font-size: clamp(1.7rem, 3.2vw, 2.8rem); letter-spacing: -.04em; }
+.practice-count { padding: 9px 12px; border-radius: 999px; background: #f1f3f0; color: #646a6c; font-size: .78rem; font-weight: 800; white-space: nowrap; }
+.practice-question-grid { display: grid; gap: 10px; }
+.practice-question { display: grid; grid-template-columns: 52px minmax(0,1fr) 220px; gap: 18px; align-items: center; padding: 17px; border: 1px solid #e4e6e3; border-radius: 16px; transition: .2s ease; }
+.practice-question:focus-within { border-color: #9ba2a0; box-shadow: 0 0 0 3px rgba(0,0,0,.04); }
+.practice-q-number { font-weight: 900; color: #777d7f; font-size: .8rem; letter-spacing: .06em; }
+.practice-q-copy { display: flex; flex-direction: column; gap: 5px; }
+.practice-q-copy strong { line-height: 1.4; }
+.practice-q-copy small { color: #7a8082; }
+.practice-question input { width: 100%; border: 1px solid #d9ddda; border-radius: 11px; padding: 12px 13px; font: inherit; outline: none; }
+.practice-question input:focus { border-color: #242729; }
+.practice-question.is-correct { border-color: #aeb9ae; background: #f5f8f4; }
+.practice-question.is-wrong { border-color: #c6aaa4; background: #fbf6f4; }
+.practice-result { grid-column: 2 / -1; font-size: .8rem; color: #646a6c; margin-top: -7px; }
+.practice-submit { margin-top: 22px; padding-top: 22px; border-top: 1px solid #e7e9e6; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.practice-submit > div { display: flex; flex-direction: column; gap: 5px; }
+.practice-submit span { color: #707678; font-size: .9rem; }
+.practice-review { margin-top: 24px; background: #e8ece8; border-radius: 24px; padding: 30px; display: flex; justify-content: space-between; gap: 28px; align-items: end; }
+.practice-review h2 { margin: 8px 0 10px; font-size: clamp(1.7rem, 3vw, 2.7rem); letter-spacing: -.04em; }
+.practice-review p { margin: 0; max-width: 700px; color: #5f6668; line-height: 1.65; }
+@media (max-width: 820px) {
+  .practice-hero { grid-template-columns: 1fr; padding-top: 46px; }
+  .practice-meta { grid-template-columns: repeat(3,1fr); }
+  .practice-player-head, .practice-review { flex-direction: column; align-items: flex-start; }
+  .practice-player-actions { justify-content: flex-start; }
+  .practice-question { grid-template-columns: 42px minmax(0,1fr); }
+  .practice-question input { grid-column: 2; }
+  .practice-result { grid-column: 2; }
+}
+@media (max-width: 560px) {
+  .practice-hero, .practice-main { padding-left: 18px; padding-right: 18px; }
+  .practice-hero h1 { font-size: clamp(2.8rem, 15vw, 4.2rem); }
+  .practice-meta { grid-template-columns: 1fr; }
+  .practice-player, .practice-questions, .practice-review { padding: 20px; border-radius: 20px; }
+  .practice-wave { gap: 3px; }
+  .practice-wave i { width: 3px; }
+  .practice-player-foot { flex-direction: column; gap: 7px; }
+  .practice-section-head { align-items: flex-start; flex-direction: column; }
+  .practice-submit { align-items: flex-start; flex-direction: column; }
+}

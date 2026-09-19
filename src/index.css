@@ -458,3 +458,59 @@ body { margin: 0; min-width: 320px; }
 .preparation-page .prep-resources{padding-bottom:52px}
 .preparation-page .prep-links a:last-child{border-bottom:0}
 .preparation-page + footer{margin-top:0}
+
+
+/* IELTS skill subpages */
+.skill-page{background:#f7f7f3}
+.skill-hero{max-width:1180px;margin:0 auto;padding:72px 32px 58px;display:grid;grid-template-columns:1.02fr .98fr;gap:54px;align-items:center}
+.skill-hero-copy h1{font-size:clamp(48px,6vw,78px);line-height:.98;letter-spacing:-.055em;margin:14px 0 22px;max-width:760px}
+.skill-hero-copy>p{font-size:18px;line-height:1.75;max-width:650px;color:#52605b}
+.skill-hero-media{height:520px;border-radius:30px;overflow:hidden;position:relative;background:#e7ece8;box-shadow:0 24px 70px rgba(25,50,40,.12)}
+.skill-hero-media img{width:100%;height:100%;display:block;object-fit:cover}
+.skill-media-card{position:absolute;left:22px;right:22px;bottom:22px;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);padding:16px 18px;border-radius:14px;font-size:11px;line-height:1.5;box-shadow:0 12px 35px rgba(20,22,24,.12)}
+.skill-media-card strong{display:block;font-size:14px;margin-top:2px}
+.skill-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:28px;max-width:700px}
+.skill-facts div{background:#fff;border:1px solid #dfe5e1;border-radius:14px;padding:13px 12px}
+.skill-facts strong{display:block;font-size:20px;letter-spacing:-.03em;color:#176b53}
+.skill-facts span{display:block;font-size:10px;color:#68706d;margin-top:3px;line-height:1.35}
+.skill-overview{padding-top:68px}
+.skill-skill-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.skill-skill-grid article{background:#fff;border:1px solid #dfe5e1;border-radius:18px;padding:24px;min-height:245px;box-shadow:0 10px 30px rgba(25,50,40,.04)}
+.skill-skill-grid article>span{font-size:10px;color:#c90a0f;font-weight:900;letter-spacing:.14em}
+.skill-skill-grid h3{font-size:21px;margin:32px 0 10px;letter-spacing:-.025em}
+.skill-skill-grid p{color:#5f6965;line-height:1.65;font-size:13px;margin:0}
+.skill-dark{background:#103f34;color:#fff;padding:82px 5vw}
+.skill-dark>.section-heading,.question-grid{max-width:1180px;margin-left:auto;margin-right:auto}
+.question-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.question-grid article{border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:24px;background:rgba(255,255,255,.055);min-height:190px}
+.question-grid article>span{font-size:10px;color:#b9d5c9;font-weight:900;letter-spacing:.14em}
+.question-grid strong{display:block;font-size:16px;line-height:1.35;margin:30px 0 9px}
+.question-grid p{color:#d1ddd8;font-size:12px;line-height:1.55;margin:0}
+.skill-review{padding-top:88px}
+.review-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.review-grid article{display:flex;gap:16px;padding:25px;border:1px solid #dfe5e1;border-radius:18px;background:#fff}
+.review-grid article>span{font-size:10px;color:#c90a0f;font-weight:900;padding-top:4px}
+.review-grid h3{margin:0 0 7px;font-size:18px}
+.review-grid p{margin:0;color:#68706d;font-size:13px;line-height:1.6}
+.skill-cta{padding-top:20px;padding-bottom:72px}
+.skill-cta-card{background:#fff;border:1px solid #d9e3dd;border-radius:26px;padding:40px;display:flex;justify-content:space-between;align-items:center;gap:35px;box-shadow:0 14px 45px rgba(25,50,40,.05)}
+.skill-cta-card h2{font-size:clamp(30px,4vw,46px);line-height:1.05;letter-spacing:-.04em;margin:9px 0 10px;max-width:700px}
+.skill-cta-card p{color:#5c6964;line-height:1.65;max-width:700px;margin:0}
+.skill-cta-actions{display:flex;flex-wrap:wrap;gap:10px;flex:0 0 auto}
+@media(max-width:900px){
+  .skill-hero{grid-template-columns:1fr;padding:50px 22px 42px;gap:30px}
+  .skill-hero-media{height:430px}
+  .skill-skill-grid,.question-grid{grid-template-columns:1fr 1fr}
+  .review-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .skill-hero-copy h1{font-size:48px}
+  .skill-hero-copy>p{font-size:15px}
+  .skill-hero-media{height:340px;border-radius:22px}
+  .skill-facts{grid-template-columns:1fr 1fr}
+  .skill-skill-grid,.question-grid{grid-template-columns:1fr}
+  .skill-dark{padding:65px 20px}
+  .skill-cta-card{padding:28px 22px;display:block}
+  .skill-cta-actions{margin-top:22px}
+  .skill-cta-actions .primary-btn,.skill-cta-actions .secondary-btn{width:100%}
+}

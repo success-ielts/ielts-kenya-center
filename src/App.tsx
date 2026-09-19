@@ -192,6 +192,25 @@ function ContentBlocks({ body }: { body:any }) {
   })}</div>;
 }
 
+function PublicHeader() {
+  return <header className="topbar">
+    <a className="brand" href="/" aria-label="IELTS Kenya Center home"><img className="brand-logo" src="/logo.svg" alt="IELTS Kenya Center" /></a>
+    <nav className="desktop-nav" aria-label="Primary navigation">
+      <a href="/#preparation">Preparation</a><a href="/#courses">Courses</a><a href="/#practice">Practice</a><a href="/#mock-tests">Mock Tests</a><a href="/#resources">Resources</a><a href="/#about">About Us</a><a href="/#contact">Contact</a>
+    </nav>
+    <div className="nav-actions"><a className="text-btn" href="/login">Student Login</a><a className="primary-btn compact" href="/register">Create Account</a></div>
+  </header>;
+}
+function PublicFooter() {
+  return <footer id="contact"><div className="footer-main">
+    <div className="brand footer-brand"><img className="brand-logo" src="/logo.svg" alt="IELTS Kenya Center" /></div>
+    <div><strong>Platform</strong><a href="/page/ielts-courses">Courses</a><a href="/page/ielts-practice">Practice</a><a href="/page/ielts-preparation-kenya">Preparation</a></div>
+    <div><strong>Skills</strong><a href="/page/ielts-listening">Listening</a><a href="/page/ielts-reading">Reading</a><a href="/page/ielts-writing">Writing</a><a href="/page/ielts-speaking">Speaking</a></div>
+    <div><strong>Support</strong><a href="/page/ielts-resources">Resources</a><a href="/#contact">Contact</a><a href="/#about">About Us</a></div>
+    <div><strong>Account</strong><a href="/login">Student Login</a><a href="/register">Create Account</a></div>
+  </div><div className="footer-bottom"><span>© 2026 IELTS Kenya Center. Prepare • Practice • Achieve.</span><span>Privacy • Terms • Cookies</span></div></footer>;
+}
+
 function PublicPage({ pageKey }: { pageKey:string }) {
   const [page,setPage]=useState<any>(null); const [error,setError]=useState('');
   const staticPage=seoContentByKey[pageKey];
@@ -204,7 +223,7 @@ function PublicPage({ pageKey }: { pageKey:string }) {
       ['Writing','Develop clear task responses, organisation and language.','/resources/ielts/annie-spratt-fvaB1MK6NxM-unsplash.jpg','Explore Writing','/page/ielts-writing'],
       ['Speaking','Build flexible answers, fluency and confidence under time pressure.','/resources/ielts/pexels-fajar-herlambang-studio-TmdrCRVDOnQ-unsplash.jpg','Explore Speaking','/page/ielts-speaking'],
     ];
-    return <main className={isPreparation ? 'learner-shell preparation-page' : 'learner-shell'}>
+    return <div className="site-shell"><PublicHeader/><main className={isPreparation ? 'learner-shell preparation-page' : 'learner-shell'}>
       <Seo title={staticPage.title} description={staticPage.description} canonical={productionOrigin+'/page/'+encodeURIComponent(pageKey)} jsonLd={{'@context':'https://schema.org','@graph':[{'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin,logo:productionOrigin+'/favicon.svg'},{'@type':'WebSite',name:'IELTS Kenya Center',url:productionOrigin},{'@type':'WebPage',name:staticPage.title,description:staticPage.description,url:productionOrigin+'/page/'+encodeURIComponent(pageKey)},{'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Home',item:productionOrigin+'/'},{'@type':'ListItem',position:2,name:staticPage.title,item:productionOrigin+'/page/'+encodeURIComponent(pageKey)}]}]}} />
       {isPreparation ? <>
         <section className="prep-hero">
@@ -219,7 +238,7 @@ function PublicPage({ pageKey }: { pageKey:string }) {
         <section className="learner-hero"><div><span className="kicker">IELTS KENYA CENTER</span><h1>{staticPage.title}</h1><p>{staticPage.intro}</p></div><a className="secondary-btn" href="/">Home</a></section>
         <section className="learner-section"><div className="page-content">{staticPage.sections.map((s,i)=><section key={i}><h2>{s.heading}</h2>{(s.paragraphs||[]).map((p,j)=><p key={j}>{p}</p>)}{s.bullets&&<ul>{s.bullets.map((b,j)=><li key={j}>{b}</li>)}</ul>}</section>)}<section><h2>Related IELTS resources</h2><div style={{display:'grid',gap:10}}>{staticPage.links.map((l,i)=><a key={i} className="ops-detail-row" href={l.href} style={{display:'flex',textDecoration:'none',color:'inherit'}}><span><strong>{l.label}</strong><small>Continue your IELTS preparation</small></span><ArrowRight size={16}/></a>)}</div></section></div></section>
       </>}
-    </main>;
+    </main><PublicFooter/></div>;
   }
   if(error)return <main className="learner-shell"><section className="learner-hero"><div><span className="kicker">PAGE</span><h1>Page unavailable</h1><p>{error}</p><a className="secondary-btn" href="/">Return home</a></div></section></main>;
   if(!page)return <main className="learner-shell"><section style={{padding:40}}>Loading page…</section></main>;

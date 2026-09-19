@@ -221,14 +221,14 @@ function PublicPage({ pageKey }: { pageKey:string }) {
       ['Listening','Build concentration, prediction and detail-tracking skills.','/resources/ielts/pexels-tosin-olowoleni-2148141635-34162710.jpg','Explore Listening','/page/ielts-listening'],
       ['Reading','Practise locating evidence, paraphrase and timing.','/resources/ielts/markus-winkler-_bpu1M6OFy8-unsplash.jpg','Explore Reading','/page/ielts-reading'],
       ['Writing','Develop clear task responses, organisation and language.','/resources/ielts/annie-spratt-fvaB1MK6NxM-unsplash.jpg','Explore Writing','/page/ielts-writing'],
-      ['Speaking','Build flexible answers, fluency and confidence under time pressure.','/resources/ielts/pexels-fajar-herlambang-studio-TmdrCRVDOnQ-unsplash.jpg','Explore Speaking','/page/ielts-speaking'],
+      ['Speaking','Build flexible answers, fluency and confidence under time pressure.','/resources/ielts/pexels-ivan-s-5676737.jpg','Explore Speaking','/page/ielts-speaking'],
     ];
     return <div className="site-shell"><PublicHeader/><main className={isPreparation ? 'learner-shell preparation-page' : 'learner-shell'}>
       <Seo title={staticPage.title} description={staticPage.description} canonical={productionOrigin+'/page/'+encodeURIComponent(pageKey)} jsonLd={{'@context':'https://schema.org','@graph':[{'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin,logo:productionOrigin+'/favicon.svg'},{'@type':'WebSite',name:'IELTS Kenya Center',url:productionOrigin},{'@type':'WebPage',name:staticPage.title,description:staticPage.description,url:productionOrigin+'/page/'+encodeURIComponent(pageKey)},{'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Home',item:productionOrigin+'/'},{'@type':'ListItem',position:2,name:staticPage.title,item:productionOrigin+'/page/'+encodeURIComponent(pageKey)}]}]}} />
       {isPreparation ? <>
         <section className="prep-hero">
           <div className="prep-hero-copy"><span className="kicker">IELTS KENYA CENTER • PREPARATION</span><h1>IELTS preparation built around your target.</h1><p>{staticPage.intro}</p><div className="hero-actions"><a className="primary-btn" href="/register">Start preparing <ArrowRight size={18}/></a><a className="secondary-btn" href="/page/ielts-courses">Explore courses</a></div><div className="prep-facts"><span><strong>4</strong> skills</span><span><strong>Academic</strong> & General Training</span><span><strong>Practice</strong> + review</span></div></div>
-          <div className="prep-hero-image"><img src="/resources/ielts/pexels-abubakar-mamuda-2150975575-32815203.jpg" alt="Students studying together with books and laptops" /></div>
+          <div className="prep-hero-image"><img src="/resources/ielts/pexels-andy-barbour-6683580.jpg" alt="Students studying together with books and laptops" /></div>
         </section>
         <section className="prep-intro section"><div className="section-heading"><div><span className="kicker">THE FOUR SKILLS</span><h2>Know what to practise, and why.</h2></div><p>IELTS preparation works best when each skill has a clear purpose and every practice session produces something you can review.</p></div><div className="prep-skill-grid">{skillCards.map(([title,desc,img,cta,href])=><article className="prep-skill-card" key={title}><img src={img} alt={title+' IELTS preparation'} loading="lazy"/><div><span className="kicker">{title.toUpperCase()}</span><h3>{title}</h3><p>{desc}</p><a href={href}>{cta}<ArrowRight size={16}/></a></div></article>)}</div></section>
         <section className="section prep-routine"><div className="section-heading"><div><span className="kicker">A PRACTICAL ROUTINE</span><h2>Turn preparation into a repeatable system.</h2></div><p>Start with a baseline, build skills, add timed work, then use mistakes to decide what comes next.</p></div><div className="prep-steps">{staticPage.sections[1]?.bullets?.map((item:string,i:number)=><article key={item}><span>{String(i+1).padStart(2,'0')}</span><h3>{item.split('.')[0]}</h3><p>{item}</p></article>)}</div></section>
@@ -471,7 +471,7 @@ function App() {
           <div className="hero-panel hero-photo-panel">
             <img
               className="hero-student-photo"
-              src="/resources/ielts/pexels-abubakar-mamuda-2150975575-32815203.jpg"
+              src="/resources/ielts/pexels-andy-barbour-6683580.jpg"
               alt="University students studying together with books and laptops"
               loading="eager"
               fetchPriority="high"
@@ -563,7 +563,7 @@ function App() {
               ['Listening','Train comprehension, note completion, matching and exam timing.','https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-tosin-olowoleni-2148141635-34162710.jpg','Student practising IELTS listening with focused study materials.'],
               ['Reading','Build passage strategies, question-type accuracy and pacing.','https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/markus-winkler-_bpu1M6OFy8-unsplash.jpg','Student reading and preparing for an academic English assessment.'],
               ['Writing','Develop task response, coherence, vocabulary and grammar.','https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/annie-spratt-fvaB1MK6NxM-unsplash.jpg','Handwriting notes while preparing an academic writing task.'],
-              ['Speaking','Practice Parts 1–3 with timed prompts, recording and feedback.','https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-fajar-herlambang-studio-TmdrCRVDOnQ-unsplash.jpg','Student speaking during a guided academic session.'],
+              ['Speaking','Practice Parts 1–3 with timed prompts, recording and feedback.','https://raw.githubusercontent.com/success-ielts/ielts-kenya-center/main/public/resources/ielts/pexels-ivan-s-5676737.jpg','Student speaking during a guided academic session.'],
             ].map(([t, d, image, alt]) => (
               <article className="skill-card skill-photo-card" key={t}>
                 <img className="skill-photo" src={image} alt={alt} loading="lazy" />

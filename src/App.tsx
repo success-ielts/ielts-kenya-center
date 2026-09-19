@@ -211,19 +211,119 @@ function PublicFooter() {
   </div><div className="footer-bottom"><span>© 2026 IELTS Kenya Center. Prepare • Practice • Achieve.</span><span>Privacy • Terms • Cookies</span></div></footer>;
 }
 
+
+function ListeningPage({ page }: { page:any }) {
+  const facts = [
+    ['30 min', 'Approx. test time'],
+    ['4 parts', 'Different listening contexts'],
+    ['40', 'Questions'],
+    ['1 play', 'Recordings are heard once'],
+  ];
+  const skills = [
+    ['01','Predict before you listen','Read the question carefully and anticipate the kind of word, number or detail you need.'],
+    ['02','Follow paraphrase','Train yourself to recognise when the recording expresses an idea differently from the question.'],
+    ['03','Track the conversation','Notice speaker changes, topic shifts and signposting so you know where the answer is developing.'],
+    ['04','Protect your focus','If you miss one answer, move on quickly and keep following the recording.'],
+  ];
+  const questionTypes = ['Form, note and table completion','Multiple choice','Matching information','Map and plan labelling'];
+  const review = [
+    ['Check the evidence','Find the exact words or idea in the recording that supports the answer.'],
+    ['Name the mistake','Was it vocabulary, spelling, prediction, locating, concentration or timing?'],
+    ['Replay with purpose','Listen again only after your first attempt and compare what you expected with what you heard.'],
+  ];
+  return <div className="skill-page listening-page">
+    <Seo
+      title={page.title}
+      description={page.description}
+      canonical={productionOrigin+'/page/ielts-listening'}
+      jsonLd={{'@context':'https://schema.org','@graph':[
+        {'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin,logo:productionOrigin+'/favicon.svg'},
+        {'@type':'WebSite',name:'IELTS Kenya Center',url:productionOrigin},
+        {'@type':'WebPage',name:page.title,description:page.description,url:productionOrigin+'/page/ielts-listening'},
+        {'@type':'BreadcrumbList',itemListElement:[
+          {'@type':'ListItem',position:1,name:'Home',item:productionOrigin+'/'},
+          {'@type':'ListItem',position:2,name:'IELTS Preparation',item:productionOrigin+'/page/ielts-preparation-kenya'},
+          {'@type':'ListItem',position:3,name:'IELTS Listening',item:productionOrigin+'/page/ielts-listening'}
+        ]}
+      ]}}
+    />
+    <section className="skill-hero">
+      <div className="skill-hero-copy">
+        <span className="kicker">IELTS KENYA CENTER • LISTENING</span>
+        <h1>Listen for meaning. Answer with precision.</h1>
+        <p>{page.intro}</p>
+        <div className="hero-actions">
+          <a className="primary-btn" href="/page/ielts-practice">Start Listening practice <ArrowRight size={18}/></a>
+          <a className="secondary-btn" href="/page/ielts-preparation-kenya">Back to preparation</a>
+        </div>
+        <div className="skill-facts">{facts.map(([value,label])=><div key={value}><strong>{value}</strong><span>{label}</span></div>)}</div>
+      </div>
+      <div className="skill-hero-media">
+        <img src="/resources/ielts/pexels-tosin-olowoleni-2148141635-34162710.jpg" alt="Student focused on IELTS listening and study practice" />
+        <div className="skill-media-card"><span className="status-dot"/> FOUR SKILLS <strong>Listening • Reading • Writing • Speaking</strong></div>
+      </div>
+    </section>
+
+    <section className="section skill-overview">
+      <div className="section-heading">
+        <div><span className="kicker">WHAT TO TRAIN</span><h2>Build the habits that make listening practice useful.</h2></div>
+        <p>Do not treat every practice attempt as just a score. Train the decisions you make before, during and after the recording.</p>
+      </div>
+      <div className="skill-skill-grid">
+        {skills.map(([n,title,description])=><article key={n}><span>{n}</span><h3>{title}</h3><p>{description}</p></article>)}
+      </div>
+    </section>
+
+    <section className="skill-dark">
+      <div className="section-heading light">
+        <div><span className="kicker">QUESTION TYPES</span><h2>Know what the task is asking you to do.</h2></div>
+        <p>Practise different formats so the question itself does not become the distraction.</p>
+      </div>
+      <div className="question-grid">
+        {questionTypes.map((item,i)=><article key={item}><span>0{i+1}</span><strong>{item}</strong><p>Read the instructions first, predict what you need and then listen for the evidence.</p></article>)}
+      </div>
+    </section>
+
+    <section className="section skill-review">
+      <div className="section-heading">
+        <div><span className="kicker">THE REVIEW LOOP</span><h2>Turn mistakes into the next study task.</h2></div>
+        <p>{page.sections?.[1]?.paragraphs?.[0] || 'Review every practice attempt with a clear reason for each mistake.'}</p>
+      </div>
+      <div className="review-grid">
+        {review.map(([title,description],i)=><article key={title}><span>0{i+1}</span><div><h3>{title}</h3><p>{description}</p></div></article>)}
+      </div>
+    </section>
+
+    <section className="section skill-cta">
+      <div className="skill-cta-card">
+        <div>
+          <span className="kicker">NEXT STEP</span>
+          <h2>Build Listening into a four-skill study routine.</h2>
+          <p>Use focused Listening practice, then return to the full preparation pathway for Reading, Writing, Speaking and mock-test work.</p>
+        </div>
+        <div className="skill-cta-actions">
+          <a className="primary-btn" href="/page/ielts-practice">Open IELTS practice <ArrowRight size={18}/></a>
+          <a className="secondary-btn" href="/page/ielts-preparation-kenya">View preparation plan</a>
+        </div>
+      </div>
+    </section>
+  </div>;
+}
+
 function PublicPage({ pageKey }: { pageKey:string }) {
   const [page,setPage]=useState<any>(null); const [error,setError]=useState('');
   const staticPage=seoContentByKey[pageKey];
   useEffect(()=>{ if(staticPage) return; api.get('/api/pages/'+encodeURIComponent(pageKey)).then(r=>setPage(r.data.page)).catch((e:any)=>setError(e?.response?.data?.message||'Page not found.')) },[pageKey,staticPage]);
   if(staticPage) {
     const isPreparation = pageKey === 'ielts-preparation-kenya';
+    const isListening = pageKey === 'ielts-listening';
     const skillCards = [
       ['Listening','Build concentration, prediction and detail-tracking skills.','/resources/ielts/pexels-tosin-olowoleni-2148141635-34162710.jpg','Explore Listening','/page/ielts-listening'],
       ['Reading','Practise locating evidence, paraphrase and timing.','/resources/ielts/markus-winkler-_bpu1M6OFy8-unsplash.jpg','Explore Reading','/page/ielts-reading'],
       ['Writing','Develop clear task responses, organisation and language.','/resources/ielts/annie-spratt-fvaB1MK6NxM-unsplash.jpg','Explore Writing','/page/ielts-writing'],
       ['Speaking','Build flexible answers, fluency and confidence under time pressure.','/resources/ielts/pexels-ivan-s-5676737.jpg','Explore Speaking','/page/ielts-speaking'],
     ];
-    return <div className="site-shell"><PublicHeader/><main className={isPreparation ? 'learner-shell preparation-page' : 'learner-shell'}>
+    return <div className="site-shell"><PublicHeader/>{isListening ? <main className="learner-shell listening-shell"><ListeningPage page={staticPage}/></main> : <main className={isPreparation ? 'learner-shell preparation-page' : 'learner-shell'}>
       <Seo title={staticPage.title} description={staticPage.description} canonical={productionOrigin+'/page/'+encodeURIComponent(pageKey)} jsonLd={{'@context':'https://schema.org','@graph':[{'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin,logo:productionOrigin+'/favicon.svg'},{'@type':'WebSite',name:'IELTS Kenya Center',url:productionOrigin},{'@type':'WebPage',name:staticPage.title,description:staticPage.description,url:productionOrigin+'/page/'+encodeURIComponent(pageKey)},{'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Home',item:productionOrigin+'/'},{'@type':'ListItem',position:2,name:staticPage.title,item:productionOrigin+'/page/'+encodeURIComponent(pageKey)}]}]}} />
       {isPreparation ? <>
         <section className="prep-hero">
@@ -238,7 +338,7 @@ function PublicPage({ pageKey }: { pageKey:string }) {
         <section className="learner-hero"><div><span className="kicker">IELTS KENYA CENTER</span><h1>{staticPage.title}</h1><p>{staticPage.intro}</p></div><a className="secondary-btn" href="/">Home</a></section>
         <section className="learner-section"><div className="page-content">{staticPage.sections.map((s,i)=><section key={i}><h2>{s.heading}</h2>{(s.paragraphs||[]).map((p,j)=><p key={j}>{p}</p>)}{s.bullets&&<ul>{s.bullets.map((b,j)=><li key={j}>{b}</li>)}</ul>}</section>)}<section><h2>Related IELTS resources</h2><div style={{display:'grid',gap:10}}>{staticPage.links.map((l,i)=><a key={i} className="ops-detail-row" href={l.href} style={{display:'flex',textDecoration:'none',color:'inherit'}}><span><strong>{l.label}</strong><small>Continue your IELTS preparation</small></span><ArrowRight size={16}/></a>)}</div></section></div></section>
       </>}
-    </main><PublicFooter/></div>;
+    </main>}{isListening ? null : <PublicFooter/>}</div>;
   }
   if(error)return <main className="learner-shell"><section className="learner-hero"><div><span className="kicker">PAGE</span><h1>Page unavailable</h1><p>{error}</p><a className="secondary-btn" href="/">Return home</a></div></section></main>;
   if(!page)return <main className="learner-shell"><section style={{padding:40}}>Loading page…</section></main>;

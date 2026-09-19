@@ -101,5 +101,5 @@ export function RouteApp({ App }: { App: ComponentType }) {
   if (path === '/dashboard') return <DashboardPage/>;
   const course = path.match(/^\/courses\/([^/]+)$/); if (course) return <CoursePage courseId={decodeURIComponent(course[1])}/>;
   const lesson = path.match(/^\/lesson\/([^/]+)$/); if (lesson) return <LessonPage lessonId={decodeURIComponent(lesson[1])}/>;
-  return <><App/><a href="/forgot-password" style={{ position: 'fixed', right: 18, bottom: 18, zIndex: 50, background: '#fff', border: '1px solid #ddd7ca', borderRadius: 999, padding: '9px 13px', textDecoration: 'none', fontSize: 13, fontWeight: 700, boxShadow: '0 5px 18px rgba(0,0,0,.08)' }}>Forgot password?</a></>;
+  return <App/>;
 }

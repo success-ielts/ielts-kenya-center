@@ -451,3 +451,10 @@ body { margin: 0; min-width: 320px; }
   .prep-skill-card img{height:210px;min-height:0}
   .prep-steps{grid-template-columns:1fr}
 }
+
+
+/* Preparation page ending spacing */
+.preparation-page{padding-bottom:0}
+.preparation-page .prep-resources{padding-bottom:52px}
+.preparation-page .prep-links a:last-child{border-bottom:0}
+.preparation-page + footer{margin-top:0}

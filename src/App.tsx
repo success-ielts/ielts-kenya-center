@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { api } from './api';
 import { seoContentByKey } from './seoContent';
+import { isListeningAnswerCorrect, listeningPartOne } from './listeningPractice';
 import {
   ArrowRight,
   BookOpen,
@@ -253,7 +254,7 @@ function ListeningPage({ page }: { page:any }) {
         <h1>Listen for meaning. Answer with precision.</h1>
         <p>{page.intro}</p>
         <div className="hero-actions">
-          <a className="primary-btn" href="/page/ielts-practice">Start Listening practice <ArrowRight size={18}/></a>
+          <a className="primary-btn" href="/page/ielts-listening-practice">Start Listening practice <ArrowRight size={18}/></a>
           <a className="secondary-btn" href="/page/ielts-preparation-kenya">Back to preparation</a>
         </div>
         <div className="skill-facts">{facts.map(([value,label])=><div key={value}><strong>{value}</strong><span>{label}</span></div>)}</div>
@@ -319,11 +320,102 @@ function ListeningPage({ page }: { page:any }) {
           <p>Use focused Listening practice, then return to the full preparation pathway for Reading, Writing, Speaking and mock-test work.</p>
         </div>
         <div className="skill-cta-actions">
-          <a className="primary-btn" href="/page/ielts-practice">Open IELTS practice <ArrowRight size={18}/></a>
+          <a className="primary-btn" href="/page/ielts-listening-practice">Open Listening practice <ArrowRight size={18}/></a>
           <a className="secondary-btn" href="/page/ielts-preparation-kenya">View preparation plan</a>
         </div>
       </div>
     </section>
+  </div>;
+}
+
+
+function ListeningPracticePage() {
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [showScript, setShowScript] = useState(false);
+
+  const speak = () => {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(listeningPartOne.script);
+    utterance.rate = 0.92;
+    utterance.pitch = 1;
+    utterance.onstart = () => setPlaying(true);
+    utterance.onend = () => setPlaying(false);
+    utterance.onerror = () => setPlaying(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stop = () => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    setPlaying(false);
+  };
+
+  const score = listeningPartOne.questions.reduce((total, q) => total + (isListeningAnswerCorrect(answers[q.id] || '', q.answer) ? 1 : 0), 0);
+
+  useEffect(() => () => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }, []);
+
+  return <div className="listening-practice-page">
+    <Seo
+      title="IELTS Listening Practice • Part 1"
+      description="Original IELTS-style Listening practice from IELTS Kenya Center with an interactive Part 1 question set."
+      canonical={productionOrigin+'/page/ielts-listening-practice'}
+      jsonLd={{'@context':'https://schema.org','@type':'WebPage',name:'IELTS Listening Practice • Part 1',url:productionOrigin+'/page/ielts-listening-practice'}}
+    />
+    <section className="practice-hero">
+      <div>
+        <span className="kicker">IELTS KENYA CENTER • ORIGINAL PRACTICE</span>
+        <h1>Listening Practice <em>01</em></h1>
+        <p>Part 1 • Community centre registration. Listen once, complete the form-style questions, then review your evidence.</p>
+        <div className="practice-notice">Original IELTS-style material — not official IELTS test material.</div>
+      </div>
+      <div className="practice-meta"><span><strong>10</strong> questions</span><span><strong>Part 1</strong> everyday conversation</span><span><strong>1×</strong> first-listen attempt</span></div>
+    </section>
+
+    <main className="practice-main">
+      <section className="practice-player">
+        <div className="practice-player-head">
+          <div><span className="kicker">AUDIO PLAYER</span><h2>{listeningPartOne.title}</h2><p>{listeningPartOne.context}</p></div>
+          <div className="practice-player-actions">
+            <button className="primary-btn" onClick={playing ? stop : speak}>{playing ? 'Stop audio' : 'Play audio'} <ArrowRight size={17}/></button>
+            <button className="secondary-btn" onClick={() => setShowScript(v => !v)}>{showScript ? 'Hide transcript' : 'Review transcript'}</button>
+          </div>
+        </div>
+        <div className="practice-wave" aria-hidden="true">{Array.from({length:36},(_,i)=><i key={i} style={{height:(18+(i%9)*5)+'px'}}/>)}</div>
+        <div className="practice-player-foot"><span>{playing ? 'Audio playing — listen for the evidence.' : 'Ready to play'}</span><span>Original practice recording script • Part 1</span></div>
+        {showScript && <div className="practice-transcript"><strong>Transcript</strong><p>{listeningPartOne.script}</p></div>}
+      </section>
+
+      <section className="practice-questions">
+        <div className="practice-section-head">
+          <div><span className="kicker">QUESTIONS 01–10</span><h2>Complete the information you hear.</h2></div>
+          <span className="practice-count">{Object.keys(answers).length}/10 answered</span>
+        </div>
+        <div className="practice-question-grid">
+          {listeningPartOne.questions.map(q => {
+            const correct = isListeningAnswerCorrect(answers[q.id] || '', q.answer);
+            return <label className={submitted ? `practice-question ${correct ? 'is-correct' : 'is-wrong'}` : 'practice-question'} key={q.id}>
+              <span className="practice-q-number">{String(q.id).padStart(2,'0')}</span>
+              <span className="practice-q-copy"><strong>{q.prompt}</strong><small>{q.placeholder}</small></span>
+              <input value={answers[q.id] || ''} onChange={e => setAnswers({...answers,[q.id]:e.target.value})} placeholder="Your answer" autoComplete="off" />
+              {submitted && <span className="practice-result">{correct ? 'Correct' : `Answer: ${q.answer}`}</span>}
+            </label>;
+          })}
+        </div>
+        <div className="practice-submit">
+          <div><strong>{submitted ? `Score: ${score}/10` : 'Ready to check your answers?'}</strong><span>{submitted ? 'Review each missed answer and listen again with a specific purpose.' : 'Complete all ten questions, then check your work.'}</span></div>
+          <button className="primary-btn" onClick={() => setSubmitted(true)}>Check answers <CheckCircle2 size={18}/></button>
+        </div>
+      </section>
+
+      <section className="practice-review">
+        <div><span className="kicker">REVIEW METHOD</span><h2>Do not stop at the score.</h2><p>After checking, identify what caused each missed answer: prediction, vocabulary, spelling, concentration, locating information or timing.</p></div>
+        <a className="secondary-btn" href="/page/ielts-listening">Back to Listening <ArrowRight size={17}/></a>
+      </section>
+    </main>
   </div>;
 }
 
@@ -334,13 +426,14 @@ function PublicPage({ pageKey }: { pageKey:string }) {
   if(staticPage) {
     const isPreparation = pageKey === 'ielts-preparation-kenya';
     const isListening = pageKey === 'ielts-listening';
+    const isListeningPractice = pageKey === 'ielts-listening-practice';
     const skillCards = [
       ['Listening','Build concentration, prediction and detail-tracking skills.','/resources/ielts/pexels-tosin-olowoleni-2148141635-34162710.jpg','Explore Listening','/page/ielts-listening'],
       ['Reading','Practise locating evidence, paraphrase and timing.','/resources/ielts/markus-winkler-_bpu1M6OFy8-unsplash.jpg','Explore Reading','/page/ielts-reading'],
       ['Writing','Develop clear task responses, organisation and language.','/resources/ielts/annie-spratt-fvaB1MK6NxM-unsplash.jpg','Explore Writing','/page/ielts-writing'],
       ['Speaking','Build flexible answers, fluency and confidence under time pressure.','/resources/ielts/pexels-ivan-s-5676737.jpg','Explore Speaking','/page/ielts-speaking'],
     ];
-    return <div className="site-shell"><PublicHeader/>{isListening ? <main className="learner-shell listening-shell"><ListeningPage page={staticPage}/></main> : <main className={isPreparation ? 'learner-shell preparation-page' : 'learner-shell'}>
+    return <div className="site-shell"><PublicHeader/>{isListeningPractice ? <main className="learner-shell practice-shell"><ListeningPracticePage/></main> : isListening ? <main className="learner-shell listening-shell"><ListeningPage page={staticPage}/></main> : <main className={isPreparation ? 'learner-shell preparation-page' : 'learner-shell'}>
       <Seo title={staticPage.title} description={staticPage.description} canonical={productionOrigin+'/page/'+encodeURIComponent(pageKey)} jsonLd={{'@context':'https://schema.org','@graph':[{'@type':'Organization',name:'IELTS Kenya Center',url:productionOrigin,logo:productionOrigin+'/favicon.svg'},{'@type':'WebSite',name:'IELTS Kenya Center',url:productionOrigin},{'@type':'WebPage',name:staticPage.title,description:staticPage.description,url:productionOrigin+'/page/'+encodeURIComponent(pageKey)},{'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Home',item:productionOrigin+'/'},{'@type':'ListItem',position:2,name:staticPage.title,item:productionOrigin+'/page/'+encodeURIComponent(pageKey)}]}]}} />
       {isPreparation ? <>
         <section className="prep-hero">

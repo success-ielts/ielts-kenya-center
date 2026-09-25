@@ -8,12 +8,24 @@ export function AuthHashRouter({ App }: { App: ComponentType }) {
   const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
   const accessToken = hash.get('access_token');
   const type = hash.get('type');
-  if (window.location.pathname === '/' && accessToken && type === 'recovery') return <ResetPasswordPage />;
-  if (window.location.pathname === '/' && accessToken) return <AuthCallbackPage />;
-  if (window.location.pathname === '/login') return <LoginPage />;
-  if (window.location.pathname === '/register') return <RegisterPage />;
-  if (window.location.pathname === '/forgot-password') return <ForgotPasswordPage />;
-  if (window.location.pathname === '/admin/dashboard') return <AdminDashboardPage />;
-  if (window.location.pathname === '/staff/dashboard') return <StaffDashboardPage />;
+  const path = window.location.pathname;
+
+  // Supabase recovery links arrive at the site root with a recovery token.
+  if (path === '/' && accessToken && type === 'recovery') return <ResetPasswordPage />;
+  if (path === '/' && accessToken) return <AuthCallbackPage />;
+  if (path === '/login') return <LoginPage />;
+  if (path === '/register') return <RegisterPage />;
+  if (path === '/forgot-password') return <ForgotPasswordPage />;
+  if (path === '/reset-password') return <ResetPasswordPage />;
+  if (path === '/admin/dashboard') return <AdminDashboardPage />;
+  if (path === '/staff/dashboard') return <StaffDashboardPage />;
+
+  // The completed recovery screen currently links to '/', so make that action
+  // land directly on the branded sign-in page instead of the public homepage.
+  if (path === '/' && document.referrer.includes('/reset-password')) {
+    window.location.replace('/login');
+    return null;
+  }
+
   return <RouteApp App={App} />;
 }

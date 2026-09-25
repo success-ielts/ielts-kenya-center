@@ -5,6 +5,7 @@ import { AuthHashRouter } from './AuthHashRouter';
 import './index.css';
 import './candidate-dashboard.css';
 import './brand.css';
+import './mobile-polish.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

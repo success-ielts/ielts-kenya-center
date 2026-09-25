@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ArrowRight, Check, CheckCircle2, Eye, EyeOff, GraduationCap, LockKeyhole, Mail, ShieldCheck, UserRound, Camera } from 'lucide-react';
+import { ArrowRight, Check, CheckCircle2, Eye, EyeOff, GraduationCap, LockKeyhole, Mail, ShieldCheck, UserRound, Camera, Image as ImageIcon } from 'lucide-react';
 import { api } from './api';
 import './auth.css';
 
@@ -37,48 +37,17 @@ export function LoginPage() {
   return <AuthShell><div className="auth-card"><div className="auth-card-icon"><GraduationCap size={24} /></div><span className="kicker">IELTS KENYA CENTER</span><h2>Welcome back</h2><p className="auth-subtitle">Sign in to continue your preparation journey.</p><form onSubmit={submit} noValidate><label className="auth-field"><span>Email</span><div className="auth-input-wrap"><Mail size={17} /><input name="email" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" placeholder="you@example.com" required /></div></label><PasswordField value={password} onChange={setPassword} /><div className="auth-row"><span>Can’t access your account?</span><a href="/forgot-password">Forgot password?</a></div>{message && <div className="auth-error" role="alert">{message}</div>}<button className="auth-primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={18} /></button></form>{googleConfigured && <><div className="auth-divider"><span>or</span></div><button type="button" className="google-btn" disabled={googleBusy} onClick={google}><span className="google-g">G</span>{googleBusy ? 'Connecting…' : 'Continue with Google'}</button></>}<p className="auth-switch">New to the platform? <a href="/register">Create an account</a></p></div></AuthShell>;
 }
 
-const studyReasons = [
-  ['study', 'Study / University'],
-  ['work', 'Work / Employment'],
-  ['migration', 'Immigration / Migration'],
-  ['professional', 'Professional registration'],
-  ['improve', 'Improve my English skills'],
-  ['other', 'Other'],
-] as const;
+const studyReasons = [['study', 'Study / University'], ['work', 'Work / Employment'], ['migration', 'Immigration / Migration'], ['professional', 'Professional registration'], ['improve', 'Improve my English skills'], ['other', 'Other']] as const;
 
 export function RegisterPage() {
   const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [phone, setPhone] = useState(''); const [reason, setReason] = useState(''); const [otherReason, setOtherReason] = useState(''); const [password, setPassword] = useState(''); const [confirmPassword, setConfirmPassword] = useState(''); const [photo, setPhoto] = useState<File | null>(null); const [photoPreview, setPhotoPreview] = useState(''); const [accepted, setAccepted] = useState(false); const [busy, setBusy] = useState(false); const [message, setMessage] = useState(''); const [created, setCreated] = useState(false);
   const passwordChecks = useMemo(() => ({ length: password.length >= 8, upper: /[A-Z]/.test(password), number: /\d/.test(password) }), [password]);
   const strongEnough = passwordChecks.length && passwordChecks.upper && passwordChecks.number;
-  const handlePhoto = (file?: File) => {
-    if (!file) return;
-    if (!file.type.startsWith('image/')) { setMessage('Please choose a valid image file.'); return; }
-    if (file.size > 2 * 1024 * 1024) { setMessage('Profile photos must be 2 MB or smaller.'); return; }
-    setMessage(''); setPhoto(file); setPhotoPreview(URL.createObjectURL(file));
-  };
-  const submit = async (event: FormEvent) => {
-    event.preventDefault(); setMessage('');
-    if (!name.trim() || !email.trim() || !reason || !password || !confirmPassword) { setMessage('Please complete all required fields.'); return; }
-    if (reason === 'other' && !otherReason.trim()) { setMessage('Please tell us your reason for studying IELTS.'); return; }
-    if (!strongEnough) { setMessage('Use at least 8 characters, including one uppercase letter and one number.'); return; }
-    if (password !== confirmPassword) { setMessage('Your passwords do not match.'); return; }
-    if (!accepted) { setMessage('Please accept the learner terms to create your account.'); return; }
-    setBusy(true);
-    const studyGoal = reason === 'other' ? otherReason.trim() : studyReasons.find(([key]) => key === reason)?.[1] || reason;
-    try {
-      const { data } = await api.post('/api/auth/signup', { fullName: name.trim(), email: email.trim(), password, phone: phone.trim(), studyGoal, profilePhotoName: photo?.name || '' });
-      try { localStorage.setItem('pending_learner_profile', JSON.stringify({ phone: phone.trim(), studyGoal })); } catch {}
-      if (data?.user && !data?.needsEmailVerification) {
-        try { await api.put('/api/profile', { full_name: name.trim(), phone_number: phone.trim(), study_goal: studyGoal }); } catch {}
-        window.location.replace(`${productionOrigin}/dashboard`); return;
-      }
-      setCreated(true); setMessage(data?.message || 'Account created. Check your email to verify your address before signing in.');
-    } catch (err: any) { setMessage(err?.response?.data?.message || err?.message || 'We could not create your account. Please try again.'); }
-    finally { setBusy(false); }
-  };
+  const handlePhoto = (file?: File) => { if (!file) return; if (!file.type.startsWith('image/')) { setMessage('Please choose a valid image file.'); return; } if (file.size > 2 * 1024 * 1024) { setMessage('Profile photos must be 2 MB or smaller.'); return; } setMessage(''); setPhoto(file); setPhotoPreview(URL.createObjectURL(file)); };
+  const submit = async (event: FormEvent) => { event.preventDefault(); setMessage(''); if (!name.trim() || !email.trim() || !reason || !password || !confirmPassword) { setMessage('Please complete all required fields.'); return; } if (reason === 'other' && !otherReason.trim()) { setMessage('Please tell us your reason for studying IELTS.'); return; } if (!strongEnough) { setMessage('Use at least 8 characters, including one uppercase letter and one number.'); return; } if (password !== confirmPassword) { setMessage('Your passwords do not match.'); return; } if (!accepted) { setMessage('Please accept the learner terms to create your account.'); return; } setBusy(true); const studyGoal = reason === 'other' ? otherReason.trim() : studyReasons.find(([key]) => key === reason)?.[1] || reason; try { const { data } = await api.post('/api/auth/signup', { fullName: name.trim(), email: email.trim(), password, phone: phone.trim(), studyGoal, profilePhotoName: photo?.name || '' }); try { localStorage.setItem('pending_learner_profile', JSON.stringify({ phone: phone.trim(), studyGoal })); } catch {} if (data?.user && !data?.needsEmailVerification) { try { await api.put('/api/profile', { full_name: name.trim(), phone_number: phone.trim(), study_goal: studyGoal }); } catch {} window.location.replace(`${productionOrigin}/dashboard`); return; } setCreated(true); setMessage(data?.message || 'Account created. Check your email to verify your address before signing in.'); } catch (err: any) { setMessage(err?.response?.data?.message || err?.message || 'We could not create your account. Please try again.'); } finally { setBusy(false); } };
   if (created) return <AuthShell><div className="auth-card auth-success-card"><div className="auth-success-icon"><CheckCircle2 size={28} /></div><span className="kicker">ACCOUNT CREATED</span><h2>Check your email</h2><p className="auth-subtitle">Your learner account is ready. We’ve sent a verification message to <strong>{email}</strong>. Verify your email, then sign in to continue.</p><div className="auth-success-note"><Mail size={18} /><span>Check your inbox and spam folder if you do not see the message shortly.</span></div><a className="auth-primary auth-link-button" href="/login">Continue to sign in <ArrowRight size={18} /></a></div></AuthShell>;
   return <AuthShell><div className="auth-card register-card"><div className="auth-card-icon"><GraduationCap size={24} /></div><span className="kicker">STUDENT REGISTRATION</span><h2>Create your learner account</h2><p className="auth-subtitle">Join IELTS Kenya Center to access courses, lessons, practice and measurable learning progress.</p><div className="auth-benefits"><span><Check size={15} /> Personal learner profile</span><span><Check size={15} /> Courses & lessons</span><span><Check size={15} /> Progress tracking</span></div><form onSubmit={submit} noValidate>
-    <div className="profile-photo-picker"><div className="profile-photo-preview">{photoPreview ? <img src={photoPreview} alt="Profile preview" /> : <UserRound size={34} />}</div><div><strong>Profile photo</strong><p>Optional • JPG, PNG or WebP • maximum 2 MB</p><label className="photo-upload-btn" htmlFor="profilePhoto"><Camera size={16} /> {photo ? 'Change photo' : 'Upload photo'}</label><input id="profilePhoto" name="profilePhoto" type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={e => handlePhoto(e.target.files?.[0])} hidden /></div></div>
+    <div className="profile-photo-picker"><div className="profile-photo-preview">{photoPreview ? <img src={photoPreview} alt="Profile preview" /> : <UserRound size={34} />}</div><div><strong>Profile photo</strong><p>Optional • JPG, PNG or WebP • maximum 2 MB</p><div className="photo-upload-actions"><label className="photo-upload-btn" htmlFor="profilePhotoGallery"><ImageIcon size={16} /> Choose from Gallery</label><input id="profilePhotoGallery" name="profilePhotoGallery" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => handlePhoto(e.target.files?.[0])} hidden /><label className="photo-upload-btn" htmlFor="profilePhotoCamera"><Camera size={16} /> Take Photo</label><input id="profilePhotoCamera" name="profilePhotoCamera" type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={e => handlePhoto(e.target.files?.[0])} hidden /></div>{photo && <small>Selected: {photo.name}</small>}</div></div>
     <label className="auth-field"><span>Full name <em>Required</em></span><div className="auth-input-wrap"><UserRound size={17} /><input name="fullName" value={name} onChange={e => setName(e.target.value)} autoComplete="name" placeholder="e.g. Jane Wanjiku" required /></div></label>
     <label className="auth-field"><span>Email address <em>Required</em></span><div className="auth-input-wrap"><Mail size={17} /><input name="email" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" placeholder="you@example.com" required /></div></label>
     <label className="auth-field"><span>Phone number</span><div className="auth-input-wrap"><UserRound size={17} /><input name="phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} autoComplete="tel" placeholder="e.g. +254 7XX XXX XXX" /></div></label>

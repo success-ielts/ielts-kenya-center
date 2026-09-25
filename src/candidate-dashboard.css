@@ -1,0 +1,31 @@
+/* Candidate dashboard polish — keeps the existing learning/dashboard structure intact. */
+.learner-shell { background: linear-gradient(180deg,#f2f7f4 0,#f7f7f3 340px); }
+.learner-hero { position:relative; overflow:hidden; margin-top:18px; padding:42px 36px 38px; border:1px solid #dbe6df; border-radius:26px; background:linear-gradient(135deg,#103f34 0%,#176b53 58%,#1d7c5f 100%); color:#fff; box-shadow:0 22px 65px rgba(16,63,52,.14); }
+.learner-hero::after { content:""; position:absolute; width:330px; height:330px; border:1px solid rgba(255,255,255,.13); border-radius:50%; right:-120px; top:-150px; }
+.learner-hero .kicker { color:#b9d5c9; }
+.learner-hero h1 { position:relative; z-index:1; margin-top:12px; color:#fff; }
+.learner-hero p { position:relative; z-index:1; color:#d4e1dc; }
+.learner-actions { position:relative; z-index:2; color:#d4e1dc; }
+.learner-actions .secondary-btn { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.35); color:#fff; }
+.learner-stats { padding-top:18px; }
+.learner-stats article { position:relative; overflow:hidden; border-color:#dce5e0; box-shadow:0 10px 32px rgba(25,50,40,.05); transition:transform .18s ease,box-shadow .18s ease; }
+.learner-stats article:hover { transform:translateY(-2px); box-shadow:0 16px 38px rgba(25,50,40,.09); }
+.learner-stats article::before { content:""; width:5px; position:absolute; inset:0 auto 0 0; background:#176b53; }
+.learner-stats strong { letter-spacing:-.04em; color:#103f34; }
+.learner-section { padding-top:46px; }
+.course-card { position:relative; border-color:#dce5e0; box-shadow:0 12px 35px rgba(25,50,40,.045); transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease; }
+.course-card:hover { transform:translateY(-3px); box-shadow:0 18px 46px rgba(25,50,40,.09); border-color:#b8c9c0; }
+.course-card h3 { letter-spacing:-.025em; color:#17231f; }
+.course-card p { color:#596762; }
+.course-type { color:#176b53; }
+.course-meta { color:#65716c; }
+.learner-next { margin-bottom:20px; }
+.next-card { background:linear-gradient(135deg,#103f34,#17191b); box-shadow:0 18px 45px rgba(16,63,52,.12); }
+.dashboard-message { border-radius:12px; background:#edf6f0; border:1px solid #d5e7db; }
+@media (max-width:760px) {
+  .learner-hero { margin:12px 16px 0; padding:30px 22px; border-radius:22px; }
+  .learner-hero h1 { font-size:clamp(2.2rem,12vw,3.5rem); }
+  .learner-stats { padding-left:16px; padding-right:16px; }
+  .learner-section { padding-left:16px; padding-right:16px; }
+  .course-card { padding:20px; }
+}

@@ -1,0 +1,62 @@
+/* Mobile-first layout fixes for the Reading mock test. */
+@media (max-width: 760px) {
+  /* The Reading screen currently uses an inline two-column grid. Override it on phones. */
+  main > div > div[style*="grid-template-columns"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px !important;
+    width: 100% !important;
+  }
+
+  /* Passage and questions become full-width cards in a clear vertical flow. */
+  main > div > div[style*="grid-template-columns"] > article,
+  main > div > div[style*="grid-template-columns"] > section {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Do not trap the passage inside a desktop sticky scroll panel on mobile. */
+  main > div > div[style*="grid-template-columns"] > article {
+    position: static !important;
+    top: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Give the reading title enough width so long titles wrap naturally. */
+  main > div > div[style*="grid-template-columns"] h1 {
+    overflow-wrap: anywhere;
+    word-break: normal;
+    font-size: clamp(30px, 10vw, 42px) !important;
+  }
+
+  /* Keep question text and controls inside the viewport. */
+  main > div > div[style*="grid-template-columns"] section,
+  main > div > div[style*="grid-template-columns"] section * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  main > div > div[style*="grid-template-columns"] label {
+    width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  /* Comfortable phone padding without wasting horizontal space. */
+  main > div[style*="padding: 22px 18px"] {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  main > div > div[style*="grid-template-columns"] > article,
+  main > div > div[style*="grid-template-columns"] > section {
+    padding: 18px !important;
+    border-radius: 16px !important;
+  }
+
+  main > div > div[style*="grid-template-columns"] h1 {
+    font-size: 30px !important;
+  }
+}

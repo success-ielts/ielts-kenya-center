@@ -1,0 +1,13 @@
+export const readingPractice = { title:'Reading Practice — Passage 1', context:'Read the original practice passage and answer the questions. This is preparation content, not an official IELTS test.', passage:`Community gardens are becoming more common in towns and cities. They turn unused plots into shared spaces where residents can grow vegetables, herbs and flowers. Besides producing food, these gardens can provide opportunities for neighbours to meet and learn practical skills. Some projects also donate part of their harvest to local food programmes.
+
+A successful garden usually needs clear rules. Organisers may divide the land into small plots, establish watering schedules and agree on how tools are shared. Regular maintenance is important because a neglected garden can quickly become difficult to use. In some communities, schools work with garden groups so that students can learn about plants, soil and responsible use of water.
+
+The benefits are not limited to food production. Researchers and local organisations have reported that shared green spaces can encourage outdoor activity and strengthen connections between residents. However, gardens are not a complete solution to food insecurity or urban environmental problems. Their value often depends on long-term community participation and access to suitable land.`, questions:[
+{id:1,type:'short',prompt:'What can residents grow in community gardens?',answers:['vegetables, herbs and flowers','vegetables herbs and flowers'],placeholder:'Short answer'},
+{id:2,type:'short',prompt:'What do organisers sometimes divide the land into?',answers:['small plots','plots'],placeholder:'Short answer'},
+{id:3,type:'short',prompt:'Why is regular maintenance important?',answers:['a neglected garden can quickly become difficult to use','it keeps the garden usable','the garden can become difficult to use'],placeholder:'Short answer'},
+{id:4,type:'short',prompt:'Who may work with garden groups to teach students?',answers:['schools','a school'],placeholder:'Short answer'},
+{id:5,type:'short',prompt:'Name one benefit of shared green spaces mentioned in the passage.',answers:['encourage outdoor activity','strengthen connections between residents','outdoor activity','stronger connections'],placeholder:'Short answer'},
+{id:6,type:'short',prompt:'Are community gardens described as a complete solution to food insecurity?',answers:['no','no, they are not','they are not'],placeholder:'Yes or no'},
+]};
+export function isReadingAnswerCorrect(value:string, answers:string[]){const v=value.trim().toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ');return answers.some(a=>v===a.toLowerCase()||v.includes(a.toLowerCase())||a.toLowerCase().includes(v));}

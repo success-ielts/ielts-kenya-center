@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { ArrowRight, BookOpen, CheckCircle2, Clock3, LogOut, Menu, Target, UserRound, X } from 'lucide-react';
 import { api } from './api';
 
-const shell: React.CSSProperties = { minHeight: '100vh', background: '#f7f5ef', color: '#18221f' };
+const shell: CSSProperties = { minHeight: '100vh', background: '#f7f5ef', color: '#18221f' };
 const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map(v => v[0]).join('').toUpperCase() || 'ST';
 
 export default function StudentDashboardPro() {
@@ -49,14 +49,10 @@ export default function StudentDashboardPro() {
     <header style={{ background: '#fff', borderBottom: '1px solid #e7e3d9', position: 'sticky', top: 0, zIndex: 10 }}>
       <div style={{ maxWidth: 1180, margin: '0 auto', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center' }}><img src="/logo.svg" alt="IELTS Kenya Center" style={{ width: 180, height: 54, objectFit: 'contain' }} /></a>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ display: 'none' }} />
-          <button onClick={() => setMenu(v => !v)} aria-label="Open student menu" style={{ border: 0, background: '#f3f1ea', borderRadius: 12, padding: 10 }}><Menu size={21} /></button>
-        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><button onClick={() => setMenu(v => !v)} aria-label="Open student menu" style={{ border: 0, background: '#f3f1ea', borderRadius: 12, padding: 10 }}><Menu size={21} /></button></div>
       </div>
       {menu && <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 20px 14px', display: 'flex', gap: 10, flexWrap: 'wrap' }}><button onClick={() => go('/mock-tests')} style={{ padding: '10px 14px', border: 0, borderRadius: 10, fontWeight: 700 }}>Mock Tests</button><button onClick={() => go('/dashboard')} style={{ padding: '10px 14px', border: 0, borderRadius: 10, fontWeight: 700 }}>Dashboard</button><button onClick={() => go('/')} style={{ padding: '10px 14px', border: 0, borderRadius: 10, fontWeight: 700 }}>Home</button><button onClick={signOut} style={{ padding: '10px 14px', border: 0, borderRadius: 10, fontWeight: 700, color: '#b31b22' }}>Sign out</button><button onClick={() => setMenu(false)} style={{ marginLeft: 'auto', border: 0, background: 'transparent' }}><X size={18}/></button></div>}
     </header>
-
     <div style={{ maxWidth: 1180, margin: '0 auto', padding: '30px 20px 60px' }}>
       <section style={{ background: 'linear-gradient(135deg,#0f5f49,#1f7b5d)', color: '#fff', borderRadius: 28, padding: '30px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
@@ -65,17 +61,14 @@ export default function StudentDashboardPro() {
         </div>
         <button onClick={() => go('/mock-tests')} style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '13px 18px', border: 0, borderRadius: 12, background: '#fff', color: '#18221f', fontWeight: 900 }}>Start a Mock Test <ArrowRight size={18}/></button>
       </section>
-
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginTop: 18 }}>
         {[[BookOpen, 'Courses', String(enrollments.length), 'Enrolled'], [CheckCircle2, 'Completed', String(completed), 'Lessons'], [Target, 'Target band', String(targetBand), pathway], [Clock3, 'Progress', `${totalProgress}%`, 'Across practice']].map(([Icon, label, value, sub]: any) => <article key={label} style={{ background: '#fff', border: '1px solid #e7e3d9', borderRadius: 18, padding: 20 }}><Icon size={21}/><div style={{ marginTop: 14, fontSize: 30, fontWeight: 900 }}>{value}</div><strong>{label}</strong><div style={{ color: '#68706d', marginTop: 3, fontSize: 13 }}>{sub}</div></article>)}
       </div>
-
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.5fr) minmax(280px,.8fr)', gap: 18, marginTop: 18 }}>
         <section style={{ background: '#fff', border: '1px solid #e7e3d9', borderRadius: 22, padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}><div><span style={{ fontSize: 12, letterSpacing: 1.5, fontWeight: 900 }}>MY LEARNING</span><h2 style={{ margin: '5px 0' }}>Continue learning</h2></div><button onClick={() => go('/page/ielts-courses')} style={{ border: 0, background: 'transparent', fontWeight: 800 }}>View courses →</button></div>
           <div style={{ display: 'grid', gap: 12, marginTop: 18 }}>{courses.filter((c: any) => enrolledIds.has(c.id)).map((course: any) => <article key={course.id} style={{ border: '1px solid #e5e0d6', borderRadius: 16, padding: 18, display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'center' }}><div><div style={{ fontSize: 12, color: '#1e6b55', fontWeight: 900 }}>ENROLLED COURSE</div><h3 style={{ margin: '5px 0' }}>{course.title}</h3><p style={{ margin: 0, color: '#68706d' }}>{course.description}</p></div><button onClick={() => go(`/courses/${course.id}`)} style={{ flexShrink: 0, border: 0, borderRadius: 11, padding: '11px 14px', background: '#d71920', color: '#fff', fontWeight: 800 }}>Open <ArrowRight size={16}/></button></article>)}{courses.filter((c: any) => enrolledIds.has(c.id)).length === 0 && <div style={{ padding: 24, background: '#f7f5ef', borderRadius: 16 }}><h3>Choose your IELTS pathway</h3><p>Start with Foundations or select an Academic or General Training course.</p><button onClick={() => go('/page/ielts-courses')} style={{ border: 0, borderRadius: 11, padding: '11px 15px', background: '#d71920', color: '#fff', fontWeight: 800 }}>Explore courses <ArrowRight size={16}/></button></div>}</div>
         </section>
-
         <aside style={{ display: 'grid', gap: 14, alignContent: 'start' }}>
           <section style={{ background: '#fff', border: '1px solid #e7e3d9', borderRadius: 22, padding: 22 }}><span style={{ fontSize: 12, letterSpacing: 1.5, fontWeight: 900 }}>QUICK PRACTICE</span><h2 style={{ margin: '6px 0' }}>Build exam confidence</h2><p style={{ color: '#68706d' }}>Practise a skill or take a timed mock when you are ready.</p><button onClick={() => go('/mock-tests')} style={{ width: '100%', border: 0, borderRadius: 11, padding: 13, background: '#d71920', color: '#fff', fontWeight: 900 }}>Open Mock Tests</button></section>
           <section style={{ background: '#fff', border: '1px solid #e7e3d9', borderRadius: 22, padding: 22 }}><UserRound size={21}/><h3 style={{ margin: '7px 0' }}>Your profile</h3><p style={{ color: '#68706d', marginTop: 0 }}>{me?.email || 'Account email'}</p><p style={{ color: '#68706d', marginBottom: 0 }}>Keep your study goal, target band and learner details up to date.</p></section>

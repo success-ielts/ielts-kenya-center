@@ -1,0 +1,71 @@
+/* Mobile layout polish for student dashboard and mock-test practice. */
+@media (max-width: 720px) {
+  /* Keep the student dashboard statistics readable instead of squeezing four cards into one row. */
+  main > div > div[style*="repeat(4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  /* Stack the dashboard content cleanly on phones. */
+  .student-dashboard-main-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  /* The Reading practice desktop split must become a single-column flow on mobile. */
+  main > div > div[style*="minmax(0,1.05fr)"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px !important;
+  }
+
+  /* Do not keep the passage sticky or constrained to a short viewport on phones. */
+  main > div > div[style*="minmax(0,1.05fr)"] > article:first-child {
+    position: static !important;
+    top: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Prevent long text, answer controls and cards from creating horizontal overflow. */
+  main article,
+  main section,
+  main header,
+  main button,
+  main input,
+  main textarea {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  main input,
+  main textarea {
+    min-width: 0;
+  }
+
+  /* Give practice pages comfortable phone gutters. */
+  main > div {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  /* Keep practice headers compact and readable. */
+  main header {
+    gap: 10px !important;
+  }
+
+  /* Full-width primary actions are easier to tap on small screens. */
+  main button {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 420px) {
+  /* Very small phones: use one dashboard statistic per row only when two columns become too tight. */
+  main > div > div[style*="repeat(4"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Reduce the large dashboard hero slightly while keeping the profile photo prominent. */
+  .student-dashboard-main-grid {
+    gap: 12px !important;
+  }
+}

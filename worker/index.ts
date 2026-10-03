@@ -185,6 +185,10 @@ async function api(request: Request, env: Env): Promise<Response> {
     return new Response(lines.join('\n'),{headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'public, max-age=3600'}});
   }
 
+  if (method === 'GET' && path === '/sitemap_index.xml') {
+    return Response.redirect(`${productionOrigin}/sitemap.xml`, 301);
+  }
+
   if (method === 'GET' && path === '/robots.txt') {
     return new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /staff/\nDisallow: /dashboard\nDisallow: /login\nDisallow: /signup\nDisallow: /reset-password\nSitemap: ${productionOrigin}/sitemap.xml\n`, {headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'public, max-age=3600'}});
   }

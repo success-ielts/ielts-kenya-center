@@ -52,7 +52,7 @@ async function requireUser(env: Env, request: Request) {
 }
 
 async function isEnrolled(env: Env, studentId: string, courseId: string, token: string) {
-  const result = await supabase(env, `/rest/v1/enrollments?student_id=eq.${encodeURIComponent(studentId)}&course_id=eq.${encodeURIComponent(courseId)}&status=neq.paused&select=id,status`, {}, token);
+  const result = await supabase(env, `/rest/v1/enrollments?student_id=eq.${encodeURIComponent(studentId)}&course_id=eq.${encodeURIComponent(courseId)}&status=in.(active,completed)&select=id,status`, {}, token);
   return { ok: result.response.ok, enrolled: Array.isArray(result.data) && result.data.length > 0 };
 }
 
@@ -877,15 +877,9 @@ async function api(request: Request, env: Env): Promise<Response> {
     }
 
     if (method === 'POST' && path === '/api/learning/enroll') {
-      if (!body.courseId) return error('Course is required.', 400);
-      const course = await supabase(env, `/rest/v1/courses?id=eq.${encodeURIComponent(body.courseId)}&is_published=eq.true&select=id`, {}, auth.token);
-      if (!course.response.ok || !Array.isArray(course.data) || !course.data.length) return error('Course is not available.', 404);
-      const existing = await supabase(env, `/rest/v1/enrollments?student_id=eq.${encodeURIComponent(studentId)}&course_id=eq.${encodeURIComponent(body.courseId)}&select=id,status`, {}, auth.token);
-      if (!existing.response.ok) return error('Unable to check enrollment.', 502);
-      if (Array.isArray(existing.data) && existing.data.length) return json({ enrollment: existing.data[0] });
-      const created = await supabase(env, '/rest/v1/enrollments', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ student_id: studentId, course_id: body.courseId, status: 'active' }) }, auth.token);
-      if (!created.response.ok) return error('Unable to enroll in this course.', created.response.status);
-      return json({ enrollment: Array.isArray(created.data) ? created.data[0] || null : null });
+      // Enrollment must be provisioned by a trusted administrative or verified-payment
+      // workflow. A student session alone must never grant course access.
+      return error('Self-enrollment is unavailable. Contact support to request course access.', 403);
     }
 
     const courseMatch = path.match(/^\/api\/learning\/courses\/([^/]+)$/);

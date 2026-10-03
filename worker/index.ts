@@ -136,6 +136,20 @@ async function publicSeoShell(request: Request, env: Env, pageKey: string) {
 }
 
 
+async function publicQuizSeoShell(request: Request, env: Env) {
+  const url = new URL(request.url);
+  const canonical = productionOrigin + url.pathname;
+  const quizSlug = url.pathname.split('/').filter(Boolean).at(-1) || 'ielts-practice-test';
+  const quizLabel = quizSlug.split('-').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const title = seoText(quizLabel + ' | IELTS Kenya Center', 70);
+  const description = seoText('Practise ' + quizLabel + ' with structured IELTS preparation from IELTS Kenya Center. Build confidence through focused practice and review.', 160);
+  const asset = await env.ASSETS.fetch(new Request(new URL('/index.html', request.url), { headers: request.headers }));
+  let html = await asset.text();
+  const head = '<title>' + escapeHtml(title) + '</title><meta name="description" content="' + escapeHtml(description) + '"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"><link rel="canonical" href="' + escapeHtml(canonical) + '"><meta property="og:title" content="' + escapeHtml(title) + '"><meta property="og:description" content="' + escapeHtml(description) + '"><meta property="og:url" content="' + escapeHtml(canonical) + '"><meta property="og:type" content="article"><meta property="og:site_name" content="IELTS Kenya Center">';
+  html = html.replace(/<title>[^<]*<\/title>/i, '').replace(/<link rel="canonical"[^>]*>/i, '').replace(/<meta name="description"[^>]*>/i, '').replace(/<meta property="og:title"[^>]*>/i, '').replace(/<meta property="og:description"[^>]*>/i, '').replace(/<meta property="og:url"[^>]*>/i, '').replace('</head>', head + '</head>');
+  return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' } });
+}
+
 async function publicCourseSeoShell(request: Request, env: Env, slug: string) {
   const fallback=courseSeo[slug];
   const result=await adminSupabase('/rest/v1/courses?slug=eq.'+encodeURIComponent(slug)+'&is_published=eq.true&select=id,slug,title,description,level,ielts_type&limit=1');
@@ -980,6 +994,7 @@ export default {
     if (url.pathname === '/robots.txt' || url.pathname === '/sitemap.xml' || url.pathname === '/llms.txt') return api(request, env);
     const publicPage = url.pathname.match(/^\/page\/([^/]+)$/);
     if (publicPage) return publicSeoShell(request, env, decodeURIComponent(publicPage[1]));
+    if (/^\/courses\/[^/]+\/quizzes\/[^/]+\/$/.test(url.pathname)) return publicQuizSeoShell(request, env);
     const publicCourse = url.pathname.match(/^\/course\/([^/]+)$/);
     if (publicCourse) return publicCourseSeoShell(request, env, decodeURIComponent(publicCourse[1]));
     if (url.pathname.startsWith('/api/')) return api(request, env);

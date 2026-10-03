@@ -139,8 +139,10 @@ async function publicSeoShell(request: Request, env: Env, pageKey: string) {
 async function publicQuizSeoShell(request: Request, env: Env) {
   const url = new URL(request.url);
   const canonical = productionOrigin + url.pathname;
-  const title = 'IELTS Listening Practice Test | IELTS Kenya Center';
-  const description = 'Practise IELTS Listening with a focused practice test from IELTS Kenya Center. Review your answers and build confidence with structured IELTS preparation.';
+  const quizSlug = url.pathname.split('/').filter(Boolean).at(-1) || 'ielts-practice-test';
+  const quizLabel = quizSlug.split('-').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const title = seoText(quizLabel + ' | IELTS Kenya Center', 70);
+  const description = seoText('Practise ' + quizLabel + ' with structured IELTS preparation from IELTS Kenya Center. Build confidence through focused practice and review.', 160);
   const asset = await env.ASSETS.fetch(new Request(new URL('/index.html', request.url), { headers: request.headers }));
   let html = await asset.text();
   const head = '<title>' + escapeHtml(title) + '</title><meta name="description" content="' + escapeHtml(description) + '"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"><link rel="canonical" href="' + escapeHtml(canonical) + '"><meta property="og:title" content="' + escapeHtml(title) + '"><meta property="og:description" content="' + escapeHtml(description) + '"><meta property="og:url" content="' + escapeHtml(canonical) + '"><meta property="og:type" content="article"><meta property="og:site_name" content="IELTS Kenya Center">';

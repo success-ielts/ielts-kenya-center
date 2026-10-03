@@ -37,6 +37,8 @@ DROP POLICY IF EXISTS own_enrollments_insert ON public.enrollments;
 -- Expose only question/passage fields to authenticated clients. A future trusted
 -- grading/review endpoint must return feedback only at the intended assessment stage.
 REVOKE ALL PRIVILEGES ON TABLE public.reading_questions FROM PUBLIC, anon, authenticated;
+REVOKE SELECT (correct_answer, explanation)
+  ON TABLE public.reading_questions FROM PUBLIC, anon, authenticated;
 GRANT SELECT (
   id,
   passage_id,
